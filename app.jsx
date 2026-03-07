@@ -1,4 +1,4 @@
-const { useState, useCallback, useEffect, useRef } = React;
+import { useState, useCallback, useEffect, useRef } from "react";
 const SUPA_URL = "https://rqitpxealohypyletpps.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxaXRweGVhbG9oeXB5bGV0cHBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDk1NjksImV4cCI6MjA4ODQ4NTU2OX0.CD1NHzcWAOYA1TBikMKzqibLR8wWJkObMYnYT5yASxo";
 const C = { pink:"#FF0065", teal:"#0093A2", navy:"#1C2B35", navyL:"#253544", navyD:"#111D26", bg:"#0d1520", border:"#1e2f3d", muted:"#6b8a9e", text:"#d0e4ef" };
@@ -42,6 +42,50 @@ function useTable(table, init=[]) {
     });
   }, [data, table]);
   return [data, save, loaded];
+}
+
+// PDF generation using jsPDF + html2canvas
+async function generatePDF(elementId, filename) {
+  const el = document.getElementById(elementId);
+  if(!el) return;
+  // Load libraries dynamically if not loaded
+  if(!window.html2canvas) {
+    await new Promise((res,rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+  if(!window.jspdf) {
+    await new Promise((res,rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+  const canvas = await window.html2canvas(el, {
+    scale: 2, useCORS: true, backgroundColor: '#ffffff',
+    logging: false, windowWidth: 800
+  });
+  const imgData = canvas.toDataURL('image/jpeg', 0.95);
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pdfW = pdf.internal.pageSize.getWidth();
+  const pdfH = pdf.internal.pageSize.getHeight();
+  const imgW = canvas.width;
+  const imgH = canvas.height;
+  const ratio = pdfW / imgW;
+  const scaledH = imgH * ratio;
+  let y = 0;
+  let remaining = scaledH;
+  while(remaining > 0) {
+    pdf.addImage(imgData, 'JPEG', 0, -y, pdfW, scaledH);
+    remaining -= pdfH;
+    if(remaining > 0) { pdf.addPage(); y += pdfH; }
+  }
+  pdf.save(filename);
 }
 
 // Hook for singleton config (empresa, logo, vehiculos)
@@ -338,10 +382,11 @@ function CotForm({cot,clientes,catalogo,vehiculos,onSave,onClose,MXN}){
 function DocHeader({numero,tipo,logoUrl}){return(<><div style={{background:"white",borderBottom:"1px solid #e5e7eb",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 24px"}}>{logoUrl?<img src={logoUrl} style={{height:44,maxWidth:240,objectFit:"contain"}} alt="logo"/>:<Logo size={22}/>}<div style={{textAlign:"right"}}><div style={{color:"#9ca3af",fontSize:10,fontWeight:600}}>FOLIO</div><div style={{color:C.navy,fontSize:18,fontWeight:800,fontFamily:"monospace"}}>{numero}</div><div style={{color:C.teal,fontSize:11,fontWeight:700}}>{tipo}</div></div></div><div style={{height:4,background:`linear-gradient(90deg,${C.pink},${C.teal})`}}/></>);}
 function DocFooter({empresa}){return(<div style={{background:C.navy,padding:"7px 22px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><Logo size={15} white/><div style={{textAlign:"right"}}><div style={{color:"rgba(255,255,255,.5)",fontSize:10}}>{empresa.email} · {empresa.telefono}</div>{empresa.web&&<div style={{color:C.teal,fontSize:10,fontWeight:600}}>{empresa.web}</div>}</div></div>);}
 function CotPreview({cot,empresa,logoUrl,onClose,MXN}){
+  const [genPDF,setGenPDF]=useState(false);
   return(
     <div>
-      <div className="no-print mhdr"><div style={{fontWeight:600,fontSize:13}}>{cot.numero}</div><div style={{display:"flex",gap:8}}><button className="btn btn-green" onClick={()=>window.print()}>🖨️ PDF</button><button className="xbtn" onClick={onClose}>✕</button></div></div>
-      <div style={{background:"white",color:"#111",fontSize:12}}>
+      <div className="no-print mhdr"><div style={{fontWeight:600,fontSize:13}}>{cot.numero}</div><div style={{display:"flex",gap:8}}><button className="btn btn-green" disabled={genPDF} onClick={async()=>{setGenPDF(true);await generatePDF("cot-print-area",`${cot.numero}.pdf`);setGenPDF(false);}}>{genPDF?"Generando...":"⬇️ PDF"}</button><button className="xbtn" onClick={onClose}>✕</button></div></div>
+      <div id="cot-print-area" style={{background:"white",color:"#111",fontSize:12}}>
       <DocHeader numero={cot.numero} tipo="COTIZACIÓN" empresa={empresa} logoUrl={logoUrl}/>
       <div style={{padding:"10px 22px",display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:8,borderBottom:`2px solid ${C.teal}`}}>
         <div><div style={{fontSize:9,color:"#999",fontWeight:700,textTransform:"uppercase",marginBottom:2}}>COTIZACIÓN PARA</div>
@@ -497,10 +542,12 @@ function RecForm({clientes,cotizaciones,onSave,onClose}){
   );
 }
 
-function RecPreview({rec,empresa,onClose,MXN}){return(
+function RecPreview({rec,empresa,onClose,MXN}){
+  const [genPDF,setGenPDF]=useState(false);
+  return(
   <div>
-    <div className="no-print mhdr"><div style={{fontWeight:600,fontSize:13}}>{rec.numero}</div><div style={{display:"flex",gap:8}}><button className="btn btn-green" onClick={()=>window.print()}>🖨️ PDF</button><button className="xbtn" onClick={onClose}>✕</button></div></div>
-    <div style={{background:"white",color:"#111",fontSize:12}}>
+    <div className="no-print mhdr"><div style={{fontWeight:600,fontSize:13}}>{rec.numero}</div><div style={{display:"flex",gap:8}}><button className="btn btn-green" disabled={genPDF} onClick={async()=>{setGenPDF(true);await generatePDF("rec-print-area",`${rec.numero}.pdf`);setGenPDF(false);}}>{genPDF?"Generando...":"⬇️ PDF"}</button><button className="xbtn" onClick={onClose}>✕</button></div></div>
+    <div id="rec-print-area" style={{background:"white",color:"#111",fontSize:12}}>
     <DocHeader numero={rec.numero} tipo="RECIBO DE PAGO" empresa={empresa}/>
     <div style={{padding:"12px 22px",display:"flex",justifyContent:"space-between",borderBottom:`2px solid ${C.teal}`,flexWrap:"wrap",gap:8}}>
       <div><strong style={{color:C.navy}}>{rec.clienteNombre}</strong>{rec.clienteEmpresa&&<div style={{fontSize:11,color:"#555"}}>{rec.clienteEmpresa}</div>}</div>
