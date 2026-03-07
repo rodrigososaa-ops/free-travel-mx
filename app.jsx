@@ -48,7 +48,6 @@ function useTable(table, init=[]) {
 async function generatePDF(elementId, filename) {
   const el = document.getElementById(elementId);
   if(!el) return;
-  // Load libraries dynamically if not loaded
   if(!window.html2canvas) {
     await new Promise((res,rej) => {
       const s = document.createElement('script');
@@ -74,17 +73,8 @@ async function generatePDF(elementId, filename) {
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pdfW = pdf.internal.pageSize.getWidth();
   const pdfH = pdf.internal.pageSize.getHeight();
-  const imgW = canvas.width;
-  const imgH = canvas.height;
-  const ratio = pdfW / imgW;
-  const scaledH = imgH * ratio;
-  let y = 0;
-  let remaining = scaledH;
-  while(remaining > 0) {
-    pdf.addImage(imgData, 'JPEG', 0, -y, pdfW, scaledH);
-    remaining -= pdfH;
-    if(remaining > 0) { pdf.addPage(); y += pdfH; }
-  }
+  // Always fit to single page
+  pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
   pdf.save(filename);
 }
 
