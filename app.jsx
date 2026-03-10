@@ -289,12 +289,7 @@ function Dashboard({cotizaciones,recibos,clientes,setVista,MXN}){
     const pagado=recibos.filter(r=>r.cotizacionRef===c.id).reduce((ss,r)=>ss+(r.total||0),0);
     return s+Math.max(0,(c.total||0)-pagado);
   },0);
-  const stats=[
-    {label:"Cotizaciones",val:cotizaciones.length,sub:`${pendientes} pendientes`,color:C.pink,icon:"📋"},
-    {label:"Total cobrado",val:MXN(totalRec),sub:"en recibos",color:"#00d9a0",icon:"💳"},
-    {label:"Por cobrar",val:MXN(totalRestante),sub:`de ${aprobadas.length} aprobadas`,color:"#ff9940",icon:"⏳"},
-    {label:"Clientes",val:clientes.length,sub:"registrados",color:C.teal,icon:"👥"},
-  ];
+
   const recientes=[...cotizaciones].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")).slice(0,5);
   return(
     <div>
