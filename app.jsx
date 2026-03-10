@@ -90,7 +90,7 @@ async function generatePDF(elementId, filename) {
 }
 
 // Google Calendar integration
-const GCAL_CLIENT_ID = ""; // To be filled after Google Cloud setup
+const GCAL_CLIENT_ID = "1003211929756-321kcgbcrmrtrg4jntlt10ecslksp0ov.apps.googleusercontent.com";
 async function addToGoogleCalendar(cot) {
   return new Promise((resolve) => {
     // Load Google Identity Services
