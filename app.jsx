@@ -281,9 +281,10 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
 function Dashboard({cotizaciones,recibos,clientes,setVista,MXN}){
   const totalCot=cotizaciones.reduce((s,c)=>s+(c.total||0),0);
   const totalRec=recibos.reduce((s,r)=>s+(r.total||0),0);
-  const pendientes=cotizaciones.filter(c=>c.estatus==="pendiente").length;
+  const nPendientes=cotizaciones.filter(c=>c.estatus==="pendiente").length;
+  const nAprobadas=cotizaciones.filter(c=>c.estatus==="aprobada").length;
+  const nRechazadas=cotizaciones.filter(c=>c.estatus==="rechazada").length;
   const aprobadas=cotizaciones.filter(c=>c.estatus==="aprobada");
-  const totalAprobado=aprobadas.reduce((s,c)=>s+(c.total||0),0);
   const totalRestante=aprobadas.reduce((s,c)=>{
     const pagado=recibos.filter(r=>r.cotizacionRef===c.id).reduce((ss,r)=>ss+(r.total||0),0);
     return s+Math.max(0,(c.total||0)-pagado);
