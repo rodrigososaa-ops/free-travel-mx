@@ -4,9 +4,16 @@ const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const C = { pink:"#FF0065", teal:"#0093A2", navy:"#1C2B35", navyL:"#253544", navyD:"#111D26", bg:"#0d1520", border:"#1e2f3d", muted:"#6b8a9e", text:"#d0e4ef" };
 
 async function sbFetch(path, opts={}) {
+  const {headers:extraHeaders, ...restOpts} = opts;
   const r = await fetch(SUPA_URL+path, {
-    headers: {"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json","Prefer":"return=representation",...(opts.headers||{})},
-    ...opts
+    ...restOpts,
+    headers: {
+      "apikey": SUPA_KEY,
+      "Authorization": "Bearer "+SUPA_KEY,
+      "Content-Type": "application/json",
+      "Prefer": "return=representation",
+      ...(extraHeaders||{})
+    }
   });
   if(!r.ok) { const e=await r.text(); console.error("Supabase error:",e); return null; }
   const txt = await r.text();
