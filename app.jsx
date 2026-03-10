@@ -64,24 +64,29 @@ async function generatePDF(elementId, filename) {
       document.head.appendChild(s);
     });
   }
-  const canvas = await window.html2canvas(el, {
-    scale: 2, useCORS: true, backgroundColor: '#ffffff',
-    logging: false, windowWidth: 800
-  });
-  const imgData = canvas.toDataURL('image/jpeg', 0.95);
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const pdfW = pdf.internal.pageSize.getWidth();
-  const pdfH = pdf.internal.pageSize.getHeight();
-  // Fit width, natural height (no stretching)
-  const imgW = canvas.width;
-  const imgH = canvas.height;
-  const ratio = pdfW / imgW;
-  const scaledH = imgH * ratio;
-  const { jsPDF: jsPDF2 } = window.jspdf;
-  const pdf2 = new jsPDF2({ orientation: 'portrait', unit: 'mm', format: [pdfW, scaledH] });
-  pdf2.addImage(imgData, 'JPEG', 0, 0, pdfW, scaledH);
-  pdf2.save(filename);
+  // Clone element to a temporary full-size container outside the modal
+  const clone = el.cloneNode(true);
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:fixed;top:-9999px;left:0;width:800px;background:white;z-index:-1;';
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
+  try {
+    const canvas = await window.html2canvas(wrapper, {
+      scale: 2, useCORS: true, backgroundColor: '#ffffff',
+      logging: false, width: 800, scrollY: 0
+    });
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const { jsPDF } = window.jspdf;
+    const pdfW = 210; // A4 width in mm
+    const imgW = canvas.width;
+    const imgH = canvas.height;
+    const scaledH = (imgH / imgW) * pdfW;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfW, scaledH] });
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, scaledH);
+    pdf.save(filename);
+  } finally {
+    document.body.removeChild(wrapper);
+  }
 }
 
 // Google Calendar integration
@@ -296,8 +301,49 @@ function Dashboard({cotizaciones,recibos,clientes,setVista,MXN}){
       <h1 style={{fontSize:22,fontWeight:700}}>Panel principal</h1>
       <p style={{color:C.muted,fontSize:13,marginTop:3}}>Sistema de cotizaciones y recibos</p>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:14,marginBottom:22}}>
-      {stats.map(s=><div key={s.label} className="card" style={{borderTop:`3px solid ${s.color}`}}><div style={{fontSize:20,marginBottom:8}}>{s.icon}</div><div style={{fontSize:22,fontWeight:700,color:s.color,fontFamily:"monospace"}}>{s.val}</div><div style={{fontSize:13,fontWeight:600,marginTop:2}}>{s.label}</div><div style={{fontSize:11,color:C.muted}}>{s.sub}</div></div>)}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:22}}>
+        {/* Caja 1: Resumen de cotizaciones */}
+        <div className="card" style={{borderTop:`3px solid ${C.pink}`}}>
+          <div style={{fontSize:12,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>📋 Cotizaciones</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+            <div style={{textAlign:"center",background:"rgba(255,0,101,.07)",borderRadius:7,padding:"10px 6px"}}>
+              <div style={{fontSize:22,fontWeight:800,color:C.pink,fontFamily:"monospace"}}>{cotizaciones.length}</div>
+              <div style={{fontSize:11,color:C.muted,marginTop:2}}>Total</div>
+            </div>
+            <div style={{textAlign:"center",background:"rgba(255,153,64,.07)",borderRadius:7,padding:"10px 6px"}}>
+              <div style={{fontSize:22,fontWeight:800,color:"#ff9940",fontFamily:"monospace"}}>{nPendientes}</div>
+              <div style={{fontSize:11,color:C.muted,marginTop:2}}>Pendientes</div>
+            </div>
+            <div style={{textAlign:"center",background:"rgba(0,217,160,.07)",borderRadius:7,padding:"10px 6px"}}>
+              <div style={{fontSize:22,fontWeight:800,color:"#00d9a0",fontFamily:"monospace"}}>{nAprobadas}</div>
+              <div style={{fontSize:11,color:C.muted,marginTop:2}}>Aprobadas</div>
+            </div>
+            <div style={{textAlign:"center",background:"rgba(107,138,158,.07)",borderRadius:7,padding:"10px 6px"}}>
+              <div style={{fontSize:22,fontWeight:800,color:C.muted,fontFamily:"monospace"}}>{nRechazadas}</div>
+              <div style={{fontSize:11,color:C.muted,marginTop:2}}>Rechazadas</div>
+            </div>
+          </div>
+          <div style={{borderTop:`1px solid ${C.border}`,paddingTop:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:11,color:C.muted}}>Total cotizado</span>
+            <span style={{fontFamily:"monospace",fontWeight:700,color:C.pink,fontSize:14}}>{MXN(totalCot)}</span>
+          </div>
+        </div>
+        {/* Caja 2: Resumen financiero */}
+        <div className="card" style={{borderTop:`3px solid #00d9a0`}}>
+          <div style={{fontSize:12,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>💰 Finanzas</div>
+          <div style={{marginBottom:10}}>
+            <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Total cobrado</div>
+            <div style={{fontFamily:"monospace",fontSize:22,fontWeight:800,color:"#00d9a0"}}>{MXN(totalRec)}</div>
+          </div>
+          <div style={{marginBottom:10,paddingTop:10,borderTop:`1px solid ${C.border}`}}>
+            <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Por cobrar (aprobadas)</div>
+            <div style={{fontFamily:"monospace",fontSize:22,fontWeight:800,color:"#ff9940"}}>{MXN(totalRestante)}</div>
+          </div>
+          <div style={{paddingTop:10,borderTop:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:11,color:C.muted}}>Clientes registrados</span>
+            <span style={{fontFamily:"monospace",fontWeight:700,color:C.teal,fontSize:14}}>{clientes.length}</span>
+          </div>
+        </div>
       </div>
       <div className="card">
       <p className="sec">Cotizaciones recientes</p>
@@ -308,13 +354,19 @@ function Dashboard({cotizaciones,recibos,clientes,setVista,MXN}){
             <thead><tr><th>No.</th><th>Cliente</th><th>Fecha</th><th>Total</th><th style={{color:"#00d9a0"}}>Pagado</th><th style={{color:C.pink}}>Restante</th><th>Estado</th></tr></thead>
             <tbody>
               {recientes.map(c=>(
-                <tr key={c.id}>
-                  <td style={{fontFamily:"monospace",color:C.pink,fontWeight:600}}>{c.numero}</td>
-                  <td>{c.clienteNombre}</td>
-                  <td style={{color:C.muted}}>{c.fecha}</td>
-                  <td style={{fontFamily:"monospace",fontWeight:600}}>{MXN(c.total)}</td>
-                  <td><STag s={c.estatus}/></td>
-                </tr>
+                <tr key={c.id}>{(()=>{
+                  const pagado=recibos.filter(r=>r.cotizacionRef===c.id).reduce((s,r)=>s+(r.total||0),0);
+                  const restante=Math.max(0,(c.total||0)-pagado);
+                  return(<>
+                    <td style={{fontFamily:"monospace",color:C.pink,fontWeight:600}}>{c.numero}</td>
+                    <td>{c.clienteNombre}</td>
+                    <td style={{color:C.muted}}>{c.fecha}</td>
+                    <td style={{fontFamily:"monospace",fontWeight:600}}>{MXN(c.total)}</td>
+                    <td style={{fontFamily:"monospace",fontSize:11,color:"#00d9a0",fontWeight:600}}>{pagado>0?MXN(pagado):"—"}</td>
+                    <td style={{fontFamily:"monospace",fontSize:11,color:restante>0?C.pink:"#00d9a0",fontWeight:600}}>{restante>0?MXN(restante):"✓ Saldado"}</td>
+                    <td><STag s={c.estatus}/></td>
+                  </>);
+                })()}</tr>
               ))}
             </tbody>
         </table>
