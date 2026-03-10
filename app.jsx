@@ -151,26 +151,7 @@ function doAuth(resolve, cot) {
 }
 
 // Hook for singleton config (empresa, logo, vehiculos)
-function useConfig(key, init) {
-  const [val, setVal] = useState(init);
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => {
-    sbFetch(`/rest/v1/ftm_config?id=eq.${key}&select=*`).then(rows => {
-      if(rows && rows.length>0) setVal(rows[0].data);
-      setLoaded(true);
-    });
-  }, [key]);
-  const save = useCallback(async (newVal) => {
-    const v = typeof newVal === "function" ? newVal(val) : newVal;
-    setVal(v);
-    await sbFetch(`/rest/v1/ftm_config`, {
-      method:"POST",
-      headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},
-      body: JSON.stringify([{"id":key,"data":v}])
-    });
-  }, [val, key]);
-  return [val, save, loaded];
-}
+
 const MXN=n=>new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(n||0);
 const TODAY=()=>new Date().toISOString().slice(0,10);
 const UID=()=>Math.random().toString(36).slice(2,9).toUpperCase();
