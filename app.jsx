@@ -1,54 +1,64 @@
 const { useState, useCallback, useEffect, useRef } = React;
 const SUPA_URL = "https://rqitpxealohypyletpps.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxaXRweGVhbG9oeXB5bGV0cHBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDk1NjksImV4cCI6MjA4ODQ4NTU2OX0.CD1NHzcWAOYA1TBikMKzqibLR8wWJkObMYnYT5yASxo";
+let _sb = null;
+function getSB() {
+  if(_sb) return _sb;
+  _sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+  return _sb;
+}
 const C = { pink:"#FF0065", teal:"#0093A2", navy:"#1C2B35", navyL:"#253544", navyD:"#111D26", bg:"#0d1520", border:"#1e2f3d", muted:"#6b8a9e", text:"#d0e4ef" };
 
-async function sbFetch(path, opts={}) {
-  const {headers:extraHeaders, ...restOpts} = opts;
-  const r = await fetch(SUPA_URL+path, {
-    ...restOpts,
-    headers: {
-      "apikey": SUPA_KEY,
-      "Authorization": "Bearer "+SUPA_KEY,
-      "Content-Type": "application/json",
-      "Prefer": "return=representation",
-      ...(extraHeaders||{})
-    }
-  });
-  if(!r.ok) { const e=await r.text(); console.error("Supabase error:",e); return null; }
-  const txt = await r.text();
-  return txt ? JSON.parse(txt) : null;
+// Supabase JS client
+function getSB() {
+  if(window._sb) return window._sb;
+  window._sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+  return window._sb;
 }
 
-// Hook for array tables (clientes, catalogo, cotizaciones, recibos)
+// Hook for array tables
 function useTable(table, init=[]) {
   const [data, setData] = useState(init);
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
-    sbFetch(`/rest/v1/${table}?select=*`).then(rows => {
-      if(rows) setData(rows.map(r=>r.data));
+    getSB().from(table).select("*").then(({data:rows,error}) => {
+      if(error) console.error("Load error:",error);
+      else if(rows) setData(rows.map(r=>r.data));
       setLoaded(true);
     });
   }, [table]);
   const save = useCallback(async (newData) => {
-    const arr = typeof newData === "function" ? newData(data) : newData;
+    const arr = typeof newData==="function" ? newData(data) : newData;
     setData(arr);
-    // Sync: upsert all, delete removed
-    const existing = await sbFetch(`/rest/v1/${table}?select=id`);
+    const sb = getSB();
+    const {data:existing} = await sb.from(table).select("id");
     const existingIds = new Set((existing||[]).map(r=>r.id));
     const newIds = new Set(arr.map(r=>r.id));
-    // Delete removed
     for(const id of existingIds) {
-      if(!newIds.has(id)) await sbFetch(`/rest/v1/${table}?id=eq.${id}`, {method:"DELETE"});
+      if(!newIds.has(id)) await sb.from(table).delete().eq("id",id);
     }
-    // Upsert all current
-    if(arr.length>0) await sbFetch(`/rest/v1/${table}`, {
-      method:"POST",
-      headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},
-      body: JSON.stringify(arr.map(r=>({"id":r.id,"data":r})))
-    });
+    if(arr.length>0) await sb.from(table).upsert(arr.map(r=>({id:r.id,data:r})));
   }, [data, table]);
   return [data, save, loaded];
+}
+
+// Hook for singleton config
+function useConfig(key, init) {
+  const [val, setVal] = useState(init);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    getSB().from("ftm_config").select("*").eq("id",key).then(({data:rows,error}) => {
+      if(error) console.error("Config error:",error);
+      else if(rows&&rows.length>0) setVal(rows[0].data);
+      setLoaded(true);
+    });
+  }, [key]);
+  const save = useCallback(async (newVal) => {
+    const v = typeof newVal==="function" ? newVal(val) : newVal;
+    setVal(v);
+    await getSB().from("ftm_config").upsert([{id:key,data:v}]);
+  }, [val, key]);
+  return [val, save, loaded];
 }
 
 // PDF generation using jsPDF + html2canvas
