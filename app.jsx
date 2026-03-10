@@ -73,9 +73,64 @@ async function generatePDF(elementId, filename) {
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pdfW = pdf.internal.pageSize.getWidth();
   const pdfH = pdf.internal.pageSize.getHeight();
-  // Always fit to single page
-  pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
-  pdf.save(filename);
+  // Fit width, natural height (no stretching)
+  const imgW = canvas.width;
+  const imgH = canvas.height;
+  const ratio = pdfW / imgW;
+  const scaledH = imgH * ratio;
+  const { jsPDF: jsPDF2 } = window.jspdf;
+  const pdf2 = new jsPDF2({ orientation: 'portrait', unit: 'mm', format: [pdfW, scaledH] });
+  pdf2.addImage(imgData, 'JPEG', 0, 0, pdfW, scaledH);
+  pdf2.save(filename);
+}
+
+// Google Calendar integration
+const GCAL_CLIENT_ID = ""; // To be filled after Google Cloud setup
+async function addToGoogleCalendar(cot) {
+  return new Promise((resolve) => {
+    // Load Google Identity Services
+    if(!window.google?.accounts) {
+      const s = document.createElement('script');
+      s.src = 'https://accounts.google.com/gsi/client';
+      s.onload = () => doAuth(resolve, cot);
+      document.head.appendChild(s);
+    } else {
+      doAuth(resolve, cot);
+    }
+  });
+}
+function doAuth(resolve, cot) {
+  if(!GCAL_CLIENT_ID) {
+    alert("Google Calendar no está configurado aún. Contacta al administrador.");
+    resolve(false); return;
+  }
+  const client = window.google.accounts.oauth2.initTokenClient({
+    client_id: GCAL_CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/calendar.events',
+    callback: async (resp) => {
+      if(resp.error) { resolve(false); return; }
+      // Get first service date from filas
+      const firstDate = cot.filas?.find(f=>f.fecha)?.fecha || cot.fecha;
+      const startDate = firstDate || new Date().toISOString().split('T')[0];
+      const event = {
+        summary: `${cot.clienteNombre} — ${cot.numero}`,
+        description: `Cotización: ${cot.numero}\nCliente: ${cot.clienteNombre}${cot.clienteEmpresa?" ("+cot.clienteEmpresa+")":""}\nTotal: $${cot.total?.toLocaleString('es-MX')} MXN\nEjecutivo: Free Travel México`,
+        start: { date: startDate },
+        end: { date: startDate },
+        colorId: "2"
+      };
+      try {
+        const r = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer '+resp.access_token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(event)
+        });
+        if(r.ok) { alert("✅ Evento agregado a Google Calendar"); resolve(true); }
+        else { alert("Error al agregar evento"); resolve(false); }
+      } catch(e) { alert("Error de conexión"); resolve(false); }
+    }
+  });
+  client.requestAccessToken();
 }
 
 // Hook for singleton config (empresa, logo, vehiculos)
@@ -210,7 +265,7 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
       </div>
       {/* MAIN */}
       <main className="main" style={{flex:1,padding:"28px 28px 80px",overflowY:"auto",minHeight:"100vh"}}>
-      {vista==="dashboard"&&<Dashboard cotizaciones={cotizaciones} recibos={recibos} clientes={clientes} setVista={setVista} MXN={MXN}/>}{vista==="cotizaciones"&&<Cotizaciones cotizaciones={cotizaciones} setCotizaciones={setCotizaciones} clientes={clientes} catalogo={catalogo} vehiculos={vehiculos} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="recibos"&&<Recibos recibos={recibos} setRecibos={setRecibos} cotizaciones={cotizaciones} clientes={clientes} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="clientes"&&<Clientes clientes={clientes} setClientes={setClientes} notify={notify}/>}{vista==="catalogo"&&<Catalogo catalogo={catalogo} setCatalogo={setCatalogo} notify={notify} MXN={MXN}/>}{vista==="empresa"&&<EmpresaView empresa={empresa} setEmpresa={setEmpresa} logoUrl={logoUrl} setLogoUrl={setLogoUrl} vehiculos={vehiculos} setVehiculos={setVehiculos} notify={notify}/>}
+      {vista==="dashboard"&&<Dashboard cotizaciones={cotizaciones} recibos={recibos} clientes={clientes} setVista={setVista} MXN={MXN}/>}{vista==="cotizaciones"&&<Cotizaciones cotizaciones={cotizaciones} setCotizaciones={setCotizaciones} clientes={clientes} catalogo={catalogo} vehiculos={vehiculos} recibos={recibos} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="recibos"&&<Recibos recibos={recibos} setRecibos={setRecibos} cotizaciones={cotizaciones} clientes={clientes} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="clientes"&&<Clientes clientes={clientes} setClientes={setClientes} notify={notify}/>}{vista==="catalogo"&&<Catalogo catalogo={catalogo} setCatalogo={setCatalogo} notify={notify} MXN={MXN}/>}{vista==="empresa"&&<EmpresaView empresa={empresa} setEmpresa={setEmpresa} logoUrl={logoUrl} setLogoUrl={setLogoUrl} vehiculos={vehiculos} setVehiculos={setVehiculos} notify={notify}/>}
       </main>
       {modal&&(<div className="ov" onClick={e=>e.target===e.currentTarget&&setModal(null)}><div className="mdl">
       {modal.type==="cot-form"&&<CotForm {...modal.props} empresa={empresa} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="rec-form"&&<RecForm {...modal.props} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="cot-preview"&&<CotPreview {...modal.props} empresa={empresa} logoUrl={logoUrl} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="rec-preview"&&<RecPreview {...modal.props} empresa={empresa} onClose={()=>setModal(null)} MXN={MXN}/>}
@@ -222,11 +277,17 @@ function Dashboard({cotizaciones,recibos,clientes,setVista,MXN}){
   const totalCot=cotizaciones.reduce((s,c)=>s+(c.total||0),0);
   const totalRec=recibos.reduce((s,r)=>s+(r.total||0),0);
   const pendientes=cotizaciones.filter(c=>c.estatus==="pendiente").length;
+  const aprobadas=cotizaciones.filter(c=>c.estatus==="aprobada");
+  const totalAprobado=aprobadas.reduce((s,c)=>s+(c.total||0),0);
+  const totalRestante=aprobadas.reduce((s,c)=>{
+    const pagado=recibos.filter(r=>r.cotizacionRef===c.id).reduce((ss,r)=>ss+(r.total||0),0);
+    return s+Math.max(0,(c.total||0)-pagado);
+  },0);
   const stats=[
     {label:"Cotizaciones",val:cotizaciones.length,sub:`${pendientes} pendientes`,color:C.pink,icon:"📋"},
-    {label:"Recibos emitidos",val:recibos.length,sub:MXN(totalRec)+" cobrado",color:"#00d9a0",icon:"💳"},
+    {label:"Total cobrado",val:MXN(totalRec),sub:"en recibos",color:"#00d9a0",icon:"💳"},
+    {label:"Por cobrar",val:MXN(totalRestante),sub:`de ${aprobadas.length} aprobadas`,color:"#ff9940",icon:"⏳"},
     {label:"Clientes",val:clientes.length,sub:"registrados",color:C.teal,icon:"👥"},
-    {label:"Total cotizado",val:MXN(totalCot),sub:"histórico",color:"#a8c4d4",icon:"💰"},
   ];
   const recientes=[...cotizaciones].sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")).slice(0,5);
   return(
@@ -244,7 +305,7 @@ function Dashboard({cotizaciones,recibos,clientes,setVista,MXN}){
         <div style={{textAlign:"center",padding:"30px 20px",color:C.muted}}><div style={{fontSize:34,marginBottom:8,opacity:.3}}>📋</div><p>Sin cotizaciones</p><button className="btn btn-pink" style={{marginTop:10}} onClick={()=>setVista("cotizaciones")}>Crear cotización</button></div>
       ):(
         <table className="tbl">
-            <thead><tr><th>No.</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estado</th></tr></thead>
+            <thead><tr><th>No.</th><th>Cliente</th><th>Fecha</th><th>Total</th><th style={{color:"#00d9a0"}}>Pagado</th><th style={{color:C.pink}}>Restante</th><th>Estado</th></tr></thead>
             <tbody>
               {recientes.map(c=>(
                 <tr key={c.id}>
@@ -264,7 +325,7 @@ function Dashboard({cotizaciones,recibos,clientes,setVista,MXN}){
   );
 }
 function STag({s}){return s==="aprobada"?<span className="tag-a">✓ aprobada</span>:s==="rechazada"?<span className="tag-r">✗ rechazada</span>:<span className="tag-p">● pendiente</span>;}
-function Cotizaciones({cotizaciones,setCotizaciones,clientes,catalogo,vehiculos,setModal,notify,MXN}){
+function Cotizaciones({cotizaciones,setCotizaciones,clientes,catalogo,vehiculos,recibos,setModal,notify,MXN}){
   const [q,setQ]=useState("");
   const fil=cotizaciones.filter(c=>(c.numero+c.clienteNombre).toLowerCase().includes(q.toLowerCase()));
   const nueva=()=>setModal({type:"cot-form",props:{cot:null,clientes,catalogo,vehiculos,onSave(d){setCotizaciones(p=>[{...d,id:UID(),numero:FOLIO("COT",p),fecha:TODAY(),estatus:"pendiente"},...p]);notify("✓ Guardada");}}});
@@ -288,13 +349,36 @@ function Cotizaciones({cotizaciones,setCotizaciones,clientes,catalogo,vehiculos,
               <thead><tr><th>No.</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estatus</th><th/></tr></thead>
               <tbody>
                 {fil.map(c=>(
-                  <tr key={c.id}><td style={{fontFamily:"monospace",color:C.pink,fontWeight:700}}>{c.numero}</td><td>{c.clienteNombre}</td><td style={{color:C.muted}}>{c.fecha}</td><td style={{fontFamily:"monospace",fontWeight:600}}>{MXN(c.total)}</td><td><select value={c.estatus} onChange={e=>est(c.id,e.target.value)} style={{background:"transparent",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:c.estatus==="aprobada"?"#00d9a0":c.estatus==="rechazada"?C.pink:"#ff9940"}}><option value="pendiente">pendiente</option><option value="aprobada">aprobada</option><option value="rechazada">rechazada</option></select></td><td><div style={{display:"flex",gap:5}}><button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11}} onClick={()=>ver(c)}>👁</button><button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11}} onClick={()=>editar(c)}>✏️</button><button className="btn btn-red" style={{padding:"4px 8px",fontSize:11}} onClick={()=>eliminar(c.id)}>🗑</button></div></td></tr>
+                  <tr key={c.id}>{(()=>{const pagado=recibos.filter(r=>r.cotizacionRef===c.id).reduce((s,r)=>s+(r.total||0),0);const restante=Math.max(0,(c.total||0)-pagado);return(<><td style={{fontFamily:"monospace",color:C.pink,fontWeight:700}}>{c.numero}</td><td>{c.clienteNombre}</td><td style={{color:C.muted}}>{c.fecha}</td><td style={{fontFamily:"monospace",fontWeight:600}}>{MXN(c.total)}</td><td style={{fontFamily:"monospace",fontSize:11,color:"#00d9a0",fontWeight:600}}>{pagado>0?MXN(pagado):"—"}</td><td style={{fontFamily:"monospace",fontSize:11,color:restante>0?C.pink:"#00d9a0",fontWeight:600}}>{restante>0?MXN(restante):"✓ Saldado"}</td></>);})()}<td><select value={c.estatus} onChange={e=>est(c.id,e.target.value)} style={{background:"transparent",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:c.estatus==="aprobada"?"#00d9a0":c.estatus==="rechazada"?C.pink:"#ff9940"}}><option value="pendiente">pendiente</option><option value="aprobada">aprobada</option><option value="rechazada">rechazada</option></select></td><td><div style={{display:"flex",gap:5,flexWrap:"wrap"}}><button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11}} onClick={()=>ver(c)}>👁</button><button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11}} onClick={()=>editar(c)}>✏️</button>{c.estatus==="aprobada"&&<button className="btn btn-teal" style={{padding:"4px 8px",fontSize:10}} onClick={()=>addToGoogleCalendar(c)}>📅</button>}<button className="btn btn-red" style={{padding:"4px 8px",fontSize:11}} onClick={()=>eliminar(c.id)}>🗑</button></div></td></tr>
                 ))}
               </tbody>
             </table>
         </div>
       </div>
       )}
+    </div>
+  );
+}
+function ClientSearch({clientes,value,onChange}){
+  const [q,setQ]=useState("");
+  const [open,setOpen]=useState(false);
+  const filtered=clientes.filter(c=>(c.nombre+c.empresa).toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  return(
+    <div style={{position:"relative"}}>
+      <div className="inp" style={{display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",padding:"7px 10px"}} onClick={()=>{setOpen(o=>!o);setQ("");}}>
+        <span style={{color:value?C.text:C.muted,fontSize:13}}>{value?`${value.nombre}${value.empresa?" — "+value.empresa:""}` :"Buscar cliente..."}</span>
+        <span style={{fontSize:10,color:C.muted}}>{open?"▲":"▼"}</span>
+      </div>
+      {open&&<div style={{position:"absolute",top:"100%",left:0,right:0,background:C.navyL,border:`1px solid ${C.border}`,borderRadius:6,zIndex:100,maxHeight:220,overflowY:"auto",boxShadow:"0 4px 16px rgba(0,0,0,.4)"}}>
+        <input autoFocus className="inp" style={{margin:6,width:"calc(100% - 12px)",fontSize:12}} placeholder="Buscar por nombre o empresa..." value={q} onChange={e=>setQ(e.target.value)}/>
+        {filtered.length===0&&<div style={{padding:"8px 12px",color:C.muted,fontSize:12}}>Sin resultados</div>}
+        {filtered.map(c=>(
+          <div key={c.id} style={{padding:"8px 12px",cursor:"pointer",fontSize:13,borderTop:`1px solid ${C.border}`}} onMouseDown={()=>{onChange({id:c.id,nombre:c.nombre,empresa:c.empresa||"",telefono:c.telefono||""});setOpen(false);setQ("");}}>
+            <div style={{fontWeight:600}}>{c.nombre}</div>
+            {c.empresa&&<div style={{fontSize:11,color:C.muted}}>{c.empresa}</div>}
+          </div>
+        ))}
+      </div>}
     </div>
   );
 }
@@ -322,12 +406,9 @@ function CotForm({cot,clientes,catalogo,vehiculos,onSave,onClose,MXN}){
       <div className="mhdr"><h2 style={{fontSize:15,fontWeight:700}}>{cot?"Editar":"Nueva"} cotización</h2><button className="xbtn" onClick={onClose}>✕</button></div>
       <div style={{padding:"18px 22px"}}>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
-        <div>
+        <div style={{position:"relative"}}>
             <label>Cliente *</label>
-            <select className="inp" value={cli?.id||""} onChange={e=>{const c=clientes.find(x=>x.id===e.target.value);setCli(c?{id:c.id,nombre:c.nombre,empresa:c.empresa||"",telefono:c.telefono||""}:null);}}>
-              <option value="">Seleccionar...</option>
-              {clientes.map(c=><option key={c.id} value={c.id}>{c.nombre}{c.empresa?` — ${c.empresa}`:""}</option>)}
-            </select>
+            <ClientSearch clientes={clientes} value={cli} onChange={setCli}/>
         </div>
       </div>
       {catalogo.length>0&&(
@@ -370,7 +451,7 @@ function CotForm({cot,clientes,catalogo,vehiculos,onSave,onClose,MXN}){
   );
 }
 function DocHeader({numero,tipo,logoUrl}){return(<><div style={{background:"white",borderBottom:"1px solid #e5e7eb",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 24px"}}>{logoUrl?<img src={logoUrl} style={{height:44,maxWidth:240,objectFit:"contain"}} alt="logo"/>:<Logo size={22}/>}<div style={{textAlign:"right"}}><div style={{color:"#9ca3af",fontSize:10,fontWeight:600}}>FOLIO</div><div style={{color:C.navy,fontSize:18,fontWeight:800,fontFamily:"monospace"}}>{numero}</div><div style={{color:C.teal,fontSize:11,fontWeight:700}}>{tipo}</div></div></div><div style={{height:4,background:`linear-gradient(90deg,${C.pink},${C.teal})`}}/></>);}
-function DocFooter({empresa}){return(<div style={{background:C.navy,padding:"7px 22px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><Logo size={15} white/><div style={{textAlign:"right"}}><div style={{color:"rgba(255,255,255,.5)",fontSize:10}}>{empresa.email} · {empresa.telefono}</div>{empresa.web&&<div style={{color:C.teal,fontSize:10,fontWeight:600}}>{empresa.web}</div>}</div></div>);}
+function DocFooter({empresa}){return(<div style={{background:C.navy,padding:"7px 22px",display:"flex",justifyContent:"flex-end",alignItems:"center"}}><div style={{textAlign:"right"}}><div style={{color:"rgba(255,255,255,.5)",fontSize:10}}>{empresa.email} · {empresa.telefono}</div>{empresa.web&&<div style={{color:C.teal,fontSize:10,fontWeight:600}}>{empresa.web}</div>}</div></div>);}
 function CotPreview({cot,empresa,logoUrl,onClose,MXN}){
   const [genPDF,setGenPDF]=useState(false);
   return(
@@ -506,11 +587,9 @@ function RecForm({clientes,cotizaciones,onSave,onClose}){
       <div className="mhdr"><h2 style={{fontSize:15,fontWeight:700}}>Nuevo recibo</h2><button className="xbtn" onClick={onClose}>✕</button></div>
       <div style={{padding:"16px 20px"}}>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
-        <div><label>Cliente *</label>
-          <select className="inp" value={d.clienteId} onChange={e=>{const c=clientes.find(x=>x.id===e.target.value);setD(p=>({...p,clienteId:e.target.value,clienteNombre:c?.nombre||"",clienteEmpresa:c?.empresa||""}));}}>
-            <option value="">Seleccionar...</option>
-            {clientes.map(c=><option key={c.id} value={c.id}>{c.nombre}{c.empresa?` — ${c.empresa}`:""}</option>)}
-          </select>
+        <div>
+          <label>Cliente *</label>
+          <ClientSearch clientes={clientes} value={d.clienteId?{id:d.clienteId,nombre:d.clienteNombre,empresa:d.clienteEmpresa}:null} onChange={c=>setD(p=>({...p,clienteId:c?.id||"",clienteNombre:c?.nombre||"",clienteEmpresa:c?.empresa||""}))}/>
         </div>
         <div><label>Cotización relacionada</label>
           <select className="inp" value={d.cotizacionRef} onChange={e=>{const cot=cotizaciones.find(x=>x.id===e.target.value);if(cot)setD(p=>({...p,cotizacionRef:e.target.value,concepto:`Pago ${cot.numero}`,total:String(cot.total)}));else f("cotizacionRef","");}}>
