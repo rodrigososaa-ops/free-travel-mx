@@ -247,7 +247,7 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
 @media(max-width:768px){.sidebar{display:none!important}.mob-nav{display:flex!important}.main{margin-left:0!important;padding:14px 12px 80px!important}}
 @media print{.no-print{display:none!important}body{background:white!important}}`}</style>
       {toast&&<div style={{position:"fixed",top:16,right:16,zIndex:300,background:toast.ok?C.teal:C.pink,color:"#fff",padding:"9px 16px",borderRadius:9,fontWeight:600,fontSize:13}}>{toast.msg}</div>}
-      {/* SIDEBAR */}
+      
       <aside className="sidebar no-print" style={{width:220,background:C.navyD,borderRight:`1px solid ${C.border}`,padding:"0 12px 20px",display:"flex",flexDirection:"column",position:"sticky",top:0,height:"100vh",flexShrink:0}}>
       <div style={{padding:"18px 8px 20px",borderBottom:`1px solid ${C.border}`,marginBottom:10}}>
         <Logo size={22}/>
@@ -260,7 +260,7 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
       </nav>
       <div style={{fontSize:9,color:"#1e2f3d",textAlign:"center",padding:"6px"}}>Datos locales</div>
       </aside>
-      {/* MOBILE NAV */}
+      
       <div className="mob-nav no-print">
       {NAV.map(n=>(
         <button key={n.id} className={`mob-btn ${vista===n.id?"active":""}`} onClick={()=>setVista(n.id)}>
@@ -268,7 +268,7 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
         </button>
       ))}
       </div>
-      {/* MAIN */}
+      
       <main className="main" style={{flex:1,padding:"28px 28px 80px",overflowY:"auto",minHeight:"100vh"}}>
       {vista==="dashboard"&&<Dashboard cotizaciones={cotizaciones} recibos={recibos} clientes={clientes} setVista={setVista} MXN={MXN}/>}{vista==="cotizaciones"&&<Cotizaciones cotizaciones={cotizaciones} setCotizaciones={setCotizaciones} clientes={clientes} catalogo={catalogo} vehiculos={vehiculos} recibos={recibos} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="recibos"&&<Recibos recibos={recibos} setRecibos={setRecibos} cotizaciones={cotizaciones} clientes={clientes} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="clientes"&&<Clientes clientes={clientes} setClientes={setClientes} notify={notify}/>}{vista==="catalogo"&&<Catalogo catalogo={catalogo} setCatalogo={setCatalogo} notify={notify} MXN={MXN}/>}{vista==="empresa"&&<EmpresaView empresa={empresa} setEmpresa={setEmpresa} logoUrl={logoUrl} setLogoUrl={setLogoUrl} vehiculos={vehiculos} setVehiculos={setVehiculos} notify={notify}/>}
       </main>
@@ -302,7 +302,7 @@ function Dashboard({cotizaciones,recibos,clientes,setVista,MXN}){
       <p style={{color:C.muted,fontSize:13,marginTop:3}}>Sistema de cotizaciones y recibos</p>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:22}}>
-        {/* Caja 1: Resumen de cotizaciones */}
+        
         <div className="card" style={{borderTop:`3px solid ${C.pink}`}}>
           <div style={{fontSize:12,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>📋 Cotizaciones</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
@@ -328,7 +328,7 @@ function Dashboard({cotizaciones,recibos,clientes,setVista,MXN}){
             <span style={{fontFamily:"monospace",fontWeight:700,color:C.pink,fontSize:14}}>{MXN(totalCot)}</span>
           </div>
         </div>
-        {/* Caja 2: Resumen financiero */}
+        
         <div className="card" style={{borderTop:`3px solid #00d9a0`}}>
           <div style={{fontSize:12,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>💰 Finanzas</div>
           <div style={{marginBottom:10}}>
