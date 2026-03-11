@@ -243,7 +243,7 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
 .flx{display:flex;justify-content:space-between;align-items:center}
 .sub{color:#6b8a9e;font-size:13px;margin-top:2px}
 .mhdr{padding:12px 20px;border-bottom:1px solid #1e2f3d;display:flex;justify-content:space-between;align-items:center}
-@media(max-width:768px){.sidebar{display:none!important}.mob-nav{display:flex!important}.main{margin-left:0!important;padding:12px 10px 80px!important}.card{padding:14px 12px!important}.tbl{font-size:11px!important}.tbl th,.tbl td{padding:7px 6px!important}.ov-content{max-width:100%!important;max-height:100vh!important;height:100vh!important;border-radius:0!important;overflow-y:auto!important}.mhdr{padding:14px 12px!important}.resp-grid{grid-template-columns:1fr!important}.resp-table{overflow-x:auto;-webkit-overflow-scrolling:touch}.resp-hide{display:none!important}.resp-stack{flex-direction:column!important;gap:8px!important}.resp-full{width:100%!important}h1{font-size:17px!important}h2{font-size:15px!important}}
+@media(max-width:768px){.sidebar{display:none!important}.mob-nav{display:flex!important}.main{margin-left:0!important;padding:12px 10px 80px!important}.card{padding:14px 12px!important}.tbl{font-size:11px!important}.tbl th,.tbl td{padding:7px 6px!important}.ov-content{max-width:100%!important;width:100%!important;max-height:100vh!important;height:100vh!important;border-radius:0!important;overflow-y:auto!important;margin:0!important}.mhdr{padding:14px 12px!important}.resp-grid{grid-template-columns:1fr!important}.resp-table{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%}.resp-hide{display:none!important}.resp-stack{flex-direction:column!important;gap:8px!important}.resp-full{width:100%!important}h1{font-size:17px!important}h2{font-size:15px!important}.btn{padding:8px 12px!important;font-size:12px!important}.flx{flex-wrap:wrap!important}.inp{font-size:14px!important}}
 @media print{.no-print{display:none!important}body{background:white!important}}`}</style>
       {toast&&<div style={{position:"fixed",top:16,right:16,zIndex:300,background:toast.ok?C.teal:C.pink,color:"#fff",padding:"9px 16px",borderRadius:9,fontWeight:600,fontSize:13}}>{toast.msg}</div>}
       
@@ -300,7 +300,7 @@ function Dashboard({cotizaciones,recibos,clientes,setVista,MXN}){
         
         <div className="card" style={{borderTop:`3px solid ${C.pink}`}}>
           <div style={{fontSize:12,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>📋 Cotizaciones</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+          <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
             <div style={{textAlign:"center",background:"rgba(255,0,101,.07)",borderRadius:7,padding:"10px 6px"}}>
               <div style={{fontSize:22,fontWeight:800,color:C.pink,fontFamily:"monospace"}}>{cotizaciones.length}</div>
               <div style={{fontSize:11,color:C.muted,marginTop:2}}>Total</div>
@@ -396,7 +396,7 @@ function Cotizaciones({cotizaciones,setCotizaciones,clientes,catalogo,vehiculos,
               <thead><tr><th>No.</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estatus</th><th/></tr></thead>
               <tbody>
                 {fil.map(c=>(
-                  <tr key={c.id}>{(()=>{const pagado=recibos.filter(r=>r.cotizacionRef===c.id).reduce((s,r)=>s+(r.total||0),0);const restante=Math.max(0,(c.total||0)-pagado);return(<><td style={{fontFamily:"monospace",color:C.pink,fontWeight:700}}>{c.numero}</td><td>{c.clienteNombre}</td><td className="resp-hide" style={{color:C.muted}}>{c.fecha}</td><td style={{fontFamily:"monospace",fontWeight:600}}>{MXN(c.total)}</td><td className="resp-hide" style={{fontFamily:"monospace",fontSize:11,color:"#00d9a0",fontWeight:600}}>{pagado>0?MXN(pagado):"—"}</td><td className="resp-hide" style={{fontFamily:"monospace",fontSize:11,color:restante>0?C.pink:"#00d9a0",fontWeight:600}}>{restante>0?MXN(restante):"✓ Saldado"}</td></>);})()}<td><select value={c.estatus} onChange={e=>est(c.id,e.target.value)} style={{background:"transparent",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:c.estatus==="aprobada"?"#00d9a0":c.estatus==="rechazada"?C.pink:"#ff9940"}}><option value="pendiente">pendiente</option><option value="aprobada">aprobada</option><option value="rechazada">rechazada</option></select></td><td><div style={{display:"flex",gap:5,flexWrap:"wrap"}}><button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11}} onClick={()=>ver(c)}>👁</button><button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11}} onClick={()=>editar(c)}>✏️</button>{c.estatus==="aprobada"&&<button className="btn btn-teal" style={{padding:"4px 8px",fontSize:10}} onClick={()=>addToGoogleCalendar(c)}>📅</button>}<button className="btn btn-red" style={{padding:"4px 8px",fontSize:11}} onClick={()=>eliminar(c.id)}>🗑</button></div></td></tr>
+                  <tr key={c.id}>{(()=>{const pagado=recibos.filter(r=>r.cotizacionRef===c.id).reduce((s,r)=>s+(r.total||0),0);const restante=Math.max(0,(c.total||0)-pagado);return(<><td style={{fontFamily:"monospace",color:C.pink,fontWeight:700}}>{c.numero}</td><td>{c.clienteNombre}</td><td className="resp-hide" style={{color:C.muted}}>{c.fecha}</td><td style={{fontFamily:"monospace",fontWeight:600}}>{MXN(c.total)}</td><td className="resp-hide" style={{fontFamily:"monospace",fontSize:11,color:"#00d9a0",fontWeight:600}}>{pagado>0?MXN(pagado):"—"}</td><td className="resp-hide" style={{fontFamily:"monospace",fontSize:11,color:restante>0?C.pink:"#00d9a0",fontWeight:600}}>{restante>0?MXN(restante):"✓ Saldado"}</td></>);})()}<td><select value={c.estatus} onChange={e=>est(c.id,e.target.value)} style={{background:"transparent",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:c.estatus==="aprobada"?"#00d9a0":c.estatus==="rechazada"?C.pink:"#ff9940"}}><option value="pendiente">pendiente</option><option value="aprobada">aprobada</option><option value="rechazada">rechazada</option></select></td><td><div style={{display:"flex",gap:4,flexWrap:"wrap",justifyContent:"flex-end"}}><button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11}} onClick={()=>ver(c)}>👁</button><button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11}} onClick={()=>editar(c)}>✏️</button>{c.estatus==="aprobada"&&<button className="btn btn-teal" style={{padding:"4px 8px",fontSize:10}} onClick={()=>addToGoogleCalendar(c)}>📅</button>}<button className="btn btn-red" style={{padding:"4px 8px",fontSize:11}} onClick={()=>eliminar(c.id)}>🗑</button></div></td></tr>
                 ))}
               </tbody>
             </table>
@@ -540,7 +540,7 @@ function CotPreview({cot,empresa,logoUrl,onClose,MXN}){
         </table>
         <div style={{fontSize:9,color:"#9ca3af",marginTop:4}}>Tarifas en MXN, netas y confidenciales.</div>
       </div>
-      <div style={{padding:"0 24px 12px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+      <div className="resp-grid" style={{padding:"0 24px 12px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
         {[[INCLUYE,C.teal,"INCLUYE","✓"],[NO_INCLUYE,C.pink,"NO INCLUYE","✗"]].map(([lst,col,ttl,ico])=>(
             <div key={ttl}><div style={{fontWeight:700,fontSize:11,color:"white",background:col,padding:"5px 9px",marginBottom:5,textAlign:"center"}}>{ttl}</div>{lst.map((x,i)=><div key={i} style={{fontSize:11,padding:"2px 7px"}}><span style={{color:col,fontWeight:700}}>{ico}</span> {x}</div>)}</div>
         ))}
@@ -552,7 +552,7 @@ function CotPreview({cot,empresa,logoUrl,onClose,MXN}){
         {(empresa.bancoBanco||empresa.bancoTitular||empresa.bancoCuenta)&&(
             <div style={{background:"#f0fafc",border:`1px solid ${C.teal}`,borderRadius:7,padding:"9px 12px",marginBottom:8}}>
               <div style={{fontWeight:700,fontSize:11,color:C.teal,marginBottom:5}}>💳 DEPÓSITO / TRANSFERENCIA — {empresa.bancoBanco}</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 16px",fontSize:11}}>
+              <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 16px",fontSize:11}}>
                 {[["Titular",empresa.bancoTitular,""],["No. Cuenta",empresa.bancoCuenta,"monospace"],["CLABE",empresa.bancoClabe,"monospace"],["Tarjeta",empresa.bancoTarjeta,"monospace"]].filter(([,v])=>v).map(([l,v,ff])=>(
                   <div key={l}><span style={{color:"#777"}}>{l}: </span><strong style={{fontFamily:ff||"inherit"}}>{v}</strong></div>
                 ))}
@@ -633,7 +633,7 @@ function RecForm({clientes,cotizaciones,onSave,onClose}){
     <div>
       <div className="mhdr"><h2 style={{fontSize:15,fontWeight:700}}>Nuevo recibo</h2><button className="xbtn" onClick={onClose}>✕</button></div>
       <div style={{padding:"16px 20px"}}>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+      <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
         <div>
           <label>Cliente *</label>
           <ClientSearch clientes={clientes} value={d.clienteId?{id:d.clienteId,nombre:d.clienteNombre,empresa:d.clienteEmpresa}:null} onChange={c=>setD(p=>({...p,clienteId:c?.id||"",clienteNombre:c?.nombre||"",clienteEmpresa:c?.empresa||""}))}/>
@@ -646,7 +646,7 @@ function RecForm({clientes,cotizaciones,onSave,onClose}){
         </div>
       </div>
       <div style={{marginBottom:12}}><label>Concepto *</label><input className="inp" value={d.concepto} onChange={e=>f("concepto",e.target.value)}/></div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+      <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
         <div><label>Total MXN *</label><input className="inp" type="number" min="0" value={d.total} onChange={e=>f("total",e.target.value)}/></div>
         <div><label>Método</label><select className="inp" value={d.metodoPago} onChange={e=>f("metodoPago",e.target.value)}>{["transferencia","efectivo","tarjeta","cheque","otro"].map(m=><option key={m} value={m}>{m[0].toUpperCase()+m.slice(1)}</option>)}</select></div>
       </div>
@@ -670,7 +670,7 @@ function RecPreview({rec,empresa,onClose,MXN}){
       <div style={{textAlign:"right",fontSize:11,color:"#777"}}><div>{empresa.direccion}</div><div style={{fontWeight:700,color:C.navy}}>{rec.fecha}</div></div>
     </div>
     <div style={{padding:"12px 22px"}}>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+      <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
         {[["Concepto",rec.concepto],["Método",rec.metodoPago],["Referencia",rec.referencia||"—"],["Cotización",rec.cotizacionRef||"—"]].map(([k,v])=>(
           <div key={k} style={{background:"#f4f8fb",borderRadius:6,padding:"8px 10px",border:"1px solid #e0eaf0"}}>
             <div style={{fontSize:9,color:"#9ca3af",textTransform:"uppercase"}}>{k}</div>
@@ -705,7 +705,7 @@ function Clientes({clientes,setClientes,notify}){
       {form&&(
       <div className="card" style={{marginBottom:18,borderColor:"rgba(0,147,162,.4)"}}>
         <p className="sec">{form.id?"Editar":"Nuevo"} cliente</p>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:12}}>
+        <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:12}}>
             {[["nombre","Nombre *"],["empresa","Empresa"],["email","Email"],["telefono","Teléfono"],["rfc","RFC"],["notas","Notas"]].map(([k,l])=>(
               <div key={k}><label>{l}</label><input className="inp" type={k==="email"?"email":"text"} value={form[k]||""} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))}/></div>
             ))}
@@ -755,7 +755,7 @@ function Catalogo({catalogo,setCatalogo,notify,MXN}){
       </div>
       {form&&(
       <div className="card" style={{marginBottom:14,borderColor:"rgba(0,147,162,.4)"}}><p className="sec">{form.id?"Editar":"Nuevo"} servicio</p>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:12}}>
+        <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:12}}>
             <div><label>Nombre *</label><input className="inp" value={form.nombre} onChange={e=>setForm(p=>({...p,nombre:e.target.value}))}/></div>
             <div><label>Precio MXN *</label><input className="inp" type="number" min="0" value={form.precio} onChange={e=>setForm(p=>({...p,precio:e.target.value}))}/></div>
             <div><label>Unidad</label><select className="inp" value={form.unidad} onChange={e=>setForm(p=>({...p,unidad:e.target.value}))}>{["servicio","hora","proyecto","día","mes","pieza"].map(u=><option key={u}>{u}</option>)}</select></div>
