@@ -185,6 +185,7 @@ function Logo({size=28,white=false}){
     </div>
   </div>);
 }
+
 function App(){
   const [vista,setVista]=useState("dashboard");
   const [isMobile,setIsMobile]=useState(window.innerWidth<=768);
@@ -237,13 +238,13 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
 .mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#111d26;border-top:1px solid #1e2f3d;z-index:90;padding:5px 0;overflow-x:auto}
 .mob-btn{flex:0 0 auto;min-width:56px;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 6px;border:none;background:transparent;color:#3a5568;font-size:9px;cursor:pointer}
 .mob-btn.active{color:#0093A2}
-.srch{background:#111d26;border:1px solid #1e2f3d;border-radius:9px;padding:8px 12px;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.resp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.srch{background:#111d26;border:1px solid #1e2f3d;border-radius:9px;padding:8px 12px;display:flex;align-items:center;gap:8px;margin-bottom:14px}
 .srch input{background:transparent;border:none;outline:none;color:#d0e4ef;font-family:inherit;font-size:13px;flex:1}
 .xbtn{background:none;border:none;color:#6b8a9e;font-size:20px;cursor:pointer}
 .flx{display:flex;justify-content:space-between;align-items:center}
 .sub{color:#6b8a9e;font-size:13px;margin-top:2px}
 .mhdr{padding:12px 20px;border-bottom:1px solid #1e2f3d;display:flex;justify-content:space-between;align-items:center}
-@media(max-width:768px){.sidebar{display:none!important}.mob-nav{display:flex!important}.main{margin-left:0!important;padding:12px 10px 80px!important}.card{padding:14px 12px!important}.tbl{font-size:11px!important}.tbl th,.tbl td{padding:7px 6px!important}.ov-content{max-width:100%!important;width:100%!important;max-height:100vh!important;height:100vh!important;border-radius:0!important;overflow-y:auto!important;margin:0!important}.mhdr{padding:14px 12px!important}.resp-grid{grid-template-columns:1fr!important}.resp-table{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%}.resp-hide{display:none!important}.resp-stack{flex-direction:column!important;gap:8px!important}.resp-full{width:100%!important}h1{font-size:17px!important}h2{font-size:15px!important}.btn{padding:8px 12px!important;font-size:12px!important}.flx{flex-wrap:wrap!important}.inp{font-size:14px!important}}
+@media(max-width:768px){.sidebar{display:none!important}.mob-nav{display:flex!important}.main{margin-left:0!important;padding:12px 10px 80px!important}.card{padding:14px 12px!important}.tbl{font-size:11px!important}.tbl th,.tbl td{padding:7px 6px!important}.ov-content{max-width:100%!important;width:100%!important;max-height:100vh!important;height:100vh!important;border-radius:0!important;overflow-y:auto!important;margin:0!important}.mhdr{padding:14px 12px!important}.resp-grid{display:grid!important;grid-template-columns:1fr!important;gap:12px}.resp-table{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%}.resp-hide{display:none!important}.resp-stack{flex-direction:column!important;gap:8px!important}.resp-full{width:100%!important}h1{font-size:17px!important}h2{font-size:15px!important}.btn{padding:8px 12px!important;font-size:12px!important}.flx{flex-wrap:wrap!important}.inp{font-size:14px!important}}
 @media print{.no-print{display:none!important}body{background:white!important}}`}</style>
       {toast&&<div style={{position:"fixed",top:16,right:16,zIndex:300,background:toast.ok?C.teal:C.pink,color:"#fff",padding:"9px 16px",borderRadius:9,fontWeight:600,fontSize:13}}>{toast.msg}</div>}
       
@@ -269,7 +270,7 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
       </div>
       
       <main className="main" style={{flex:1,padding:"28px 28px 80px",overflowY:"auto",minHeight:"100vh",maxWidth:"100%",overflowX:"hidden"}}>
-      {vista==="dashboard"&&<Dashboard cotizaciones={cotizaciones} recibos={recibos} clientes={clientes} setVista={setVista} MXN={MXN}/>}{vista==="cotizaciones"&&<Cotizaciones cotizaciones={cotizaciones} setCotizaciones={setCotizaciones} clientes={clientes} catalogo={catalogo} vehiculos={vehiculos} recibos={recibos} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="recibos"&&<Recibos recibos={recibos} setRecibos={setRecibos} cotizaciones={cotizaciones} clientes={clientes} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="clientes"&&<Clientes clientes={clientes} setClientes={setClientes} notify={notify}/>}{vista==="catalogo"&&<Catalogo catalogo={catalogo} setCatalogo={setCatalogo} notify={notify} MXN={MXN}/>}{vista==="empresa"&&<EmpresaView empresa={empresa} setEmpresa={setEmpresa} logoUrl={logoUrl} setLogoUrl={setLogoUrl} vehiculos={vehiculos} setVehiculos={setVehiculos} notify={notify}/>}
+      {vista==="dashboard"&&<Dashboard cotizaciones={cotizaciones} recibos={recibos} clientes={clientes} setVista={setVista} MXN={MXN} isMobile={isMobile}/>}{vista==="cotizaciones"&&<Cotizaciones cotizaciones={cotizaciones} setCotizaciones={setCotizaciones} clientes={clientes} catalogo={catalogo} vehiculos={vehiculos} recibos={recibos} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="recibos"&&<Recibos recibos={recibos} setRecibos={setRecibos} cotizaciones={cotizaciones} clientes={clientes} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="clientes"&&<Clientes clientes={clientes} setClientes={setClientes} notify={notify}/>}{vista==="catalogo"&&<Catalogo catalogo={catalogo} setCatalogo={setCatalogo} notify={notify} MXN={MXN}/>}{vista==="empresa"&&<EmpresaView empresa={empresa} setEmpresa={setEmpresa} logoUrl={logoUrl} setLogoUrl={setLogoUrl} vehiculos={vehiculos} setVehiculos={setVehiculos} notify={notify}/>}
       </main>
       {modal&&(<div className="ov" onClick={e=>e.target===e.currentTarget&&setModal(null)}><div className="mdl">
       {modal.type==="cot-form"&&<CotForm {...modal.props} empresa={empresa} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="rec-form"&&<RecForm {...modal.props} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="cot-preview"&&<CotPreview {...modal.props} empresa={empresa} logoUrl={logoUrl} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="rec-preview"&&<RecPreview {...modal.props} empresa={empresa} onClose={()=>setModal(null)} MXN={MXN}/>}
@@ -277,7 +278,7 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
     </div>
   );
 }
-function Dashboard({cotizaciones,recibos,clientes,setVista,MXN}){
+function Dashboard({cotizaciones,recibos,clientes,setVista,MXN,isMobile}){
   const totalCot=cotizaciones.reduce((s,c)=>s+(c.total||0),0);
   const totalRec=recibos.reduce((s,r)=>s+(r.total||0),0);
   const nPendientes=cotizaciones.filter(c=>c.estatus==="pendiente").length;
@@ -296,11 +297,11 @@ function Dashboard({cotizaciones,recibos,clientes,setVista,MXN}){
       <h1 style={{fontSize:22,fontWeight:700}}>Panel principal</h1>
       <p style={{color:C.muted,fontSize:13,marginTop:3}}>Sistema de cotizaciones y recibos</p>
       </div>
-      <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:22}}>
+      <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:14,marginBottom:22}}>
         
         <div className="card" style={{borderTop:`3px solid ${C.pink}`}}>
           <div style={{fontSize:12,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>📋 Cotizaciones</div>
-          <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
             <div style={{textAlign:"center",background:"rgba(255,0,101,.07)",borderRadius:7,padding:"10px 6px"}}>
               <div style={{fontSize:22,fontWeight:800,color:C.pink,fontFamily:"monospace"}}>{cotizaciones.length}</div>
               <div style={{fontSize:11,color:C.muted,marginTop:2}}>Total</div>
@@ -345,7 +346,7 @@ function Dashboard({cotizaciones,recibos,clientes,setVista,MXN}){
       {recientes.length===0?(
         <div style={{textAlign:"center",padding:"30px 20px",color:C.muted}}><div style={{fontSize:34,marginBottom:8,opacity:.3}}>📋</div><p>Sin cotizaciones</p><button className="btn btn-pink" style={{marginTop:10}} onClick={()=>setVista("cotizaciones")}>Crear cotización</button></div>
       ):(
-        <div className="resp-table"><table className="tbl">
+        <div className="resp-table"><div className="resp-table" style={{width:"100%"}}><table className="tbl">
             <thead><tr><th>No.</th><th>Cliente</th><th className="resp-hide">Fecha</th><th>Total</th><th className="resp-hide" style={{color:"#00d9a0"}}>Pagado</th><th className="resp-hide" style={{color:C.pink}}>Restante</th><th>Estado</th></tr></thead>
             <tbody>
               {recientes.map(c=>(
@@ -452,7 +453,7 @@ function CotForm({cot,clientes,catalogo,vehiculos,onSave,onClose,MXN}){
     <div>
       <div className="mhdr"><h2 style={{fontSize:15,fontWeight:700}}>{cot?"Editar":"Nueva"} cotización</h2><button className="xbtn" onClick={onClose}>✕</button></div>
       <div style={{padding:"18px 22px"}}>
-      <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
+      <div className="resp-grid" style={{gap:14,marginBottom:16}}>
         <div style={{position:"relative"}}>
             <label>Cliente *</label>
             <ClientSearch clientes={clientes} value={cli} onChange={setCli}/>
@@ -540,7 +541,7 @@ function CotPreview({cot,empresa,logoUrl,onClose,MXN}){
         </table>
         <div style={{fontSize:9,color:"#9ca3af",marginTop:4}}>Tarifas en MXN, netas y confidenciales.</div>
       </div>
-      <div className="resp-grid" style={{padding:"0 24px 12px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+      <div className="resp-grid" style={{gap:14}}>
         {[[INCLUYE,C.teal,"INCLUYE","✓"],[NO_INCLUYE,C.pink,"NO INCLUYE","✗"]].map(([lst,col,ttl,ico])=>(
             <div key={ttl}><div style={{fontWeight:700,fontSize:11,color:"white",background:col,padding:"5px 9px",marginBottom:5,textAlign:"center"}}>{ttl}</div>{lst.map((x,i)=><div key={i} style={{fontSize:11,padding:"2px 7px"}}><span style={{color:col,fontWeight:700}}>{ico}</span> {x}</div>)}</div>
         ))}
@@ -552,7 +553,7 @@ function CotPreview({cot,empresa,logoUrl,onClose,MXN}){
         {(empresa.bancoBanco||empresa.bancoTitular||empresa.bancoCuenta)&&(
             <div style={{background:"#f0fafc",border:`1px solid ${C.teal}`,borderRadius:7,padding:"9px 12px",marginBottom:8}}>
               <div style={{fontWeight:700,fontSize:11,color:C.teal,marginBottom:5}}>💳 DEPÓSITO / TRANSFERENCIA — {empresa.bancoBanco}</div>
-              <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 16px",fontSize:11}}>
+              <div className="resp-grid" style={{gap:16,marginBottom:0,fontSize:11}}>
                 {[["Titular",empresa.bancoTitular,""],["No. Cuenta",empresa.bancoCuenta,"monospace"],["CLABE",empresa.bancoClabe,"monospace"],["Tarjeta",empresa.bancoTarjeta,"monospace"]].filter(([,v])=>v).map(([l,v,ff])=>(
                   <div key={l}><span style={{color:"#777"}}>{l}: </span><strong style={{fontFamily:ff||"inherit"}}>{v}</strong></div>
                 ))}
@@ -633,7 +634,7 @@ function RecForm({clientes,cotizaciones,onSave,onClose}){
     <div>
       <div className="mhdr"><h2 style={{fontSize:15,fontWeight:700}}>Nuevo recibo</h2><button className="xbtn" onClick={onClose}>✕</button></div>
       <div style={{padding:"16px 20px"}}>
-      <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+      <div className="resp-grid" style={{gap:12,marginBottom:12}}>
         <div>
           <label>Cliente *</label>
           <ClientSearch clientes={clientes} value={d.clienteId?{id:d.clienteId,nombre:d.clienteNombre,empresa:d.clienteEmpresa}:null} onChange={c=>setD(p=>({...p,clienteId:c?.id||"",clienteNombre:c?.nombre||"",clienteEmpresa:c?.empresa||""}))}/>
@@ -646,7 +647,7 @@ function RecForm({clientes,cotizaciones,onSave,onClose}){
         </div>
       </div>
       <div style={{marginBottom:12}}><label>Concepto *</label><input className="inp" value={d.concepto} onChange={e=>f("concepto",e.target.value)}/></div>
-      <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+      <div className="resp-grid" style={{gap:12,marginBottom:12}}>
         <div><label>Total MXN *</label><input className="inp" type="number" min="0" value={d.total} onChange={e=>f("total",e.target.value)}/></div>
         <div><label>Método</label><select className="inp" value={d.metodoPago} onChange={e=>f("metodoPago",e.target.value)}>{["transferencia","efectivo","tarjeta","cheque","otro"].map(m=><option key={m} value={m}>{m[0].toUpperCase()+m.slice(1)}</option>)}</select></div>
       </div>
@@ -670,7 +671,7 @@ function RecPreview({rec,empresa,onClose,MXN}){
       <div style={{textAlign:"right",fontSize:11,color:"#777"}}><div>{empresa.direccion}</div><div style={{fontWeight:700,color:C.navy}}>{rec.fecha}</div></div>
     </div>
     <div style={{padding:"12px 22px"}}>
-      <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+      <div className="resp-grid" style={{gap:10,marginBottom:12}}>
         {[["Concepto",rec.concepto],["Método",rec.metodoPago],["Referencia",rec.referencia||"—"],["Cotización",rec.cotizacionRef||"—"]].map(([k,v])=>(
           <div key={k} style={{background:"#f4f8fb",borderRadius:6,padding:"8px 10px",border:"1px solid #e0eaf0"}}>
             <div style={{fontSize:9,color:"#9ca3af",textTransform:"uppercase"}}>{k}</div>
@@ -705,7 +706,7 @@ function Clientes({clientes,setClientes,notify}){
       {form&&(
       <div className="card" style={{marginBottom:18,borderColor:"rgba(0,147,162,.4)"}}>
         <p className="sec">{form.id?"Editar":"Nuevo"} cliente</p>
-        <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:12}}>
+        <div className="resp-grid" style={{gap:14,marginBottom:12}}>
             {[["nombre","Nombre *"],["empresa","Empresa"],["email","Email"],["telefono","Teléfono"],["rfc","RFC"],["notas","Notas"]].map(([k,l])=>(
               <div key={k}><label>{l}</label><input className="inp" type={k==="email"?"email":"text"} value={form[k]||""} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))}/></div>
             ))}
@@ -755,7 +756,7 @@ function Catalogo({catalogo,setCatalogo,notify,MXN}){
       </div>
       {form&&(
       <div className="card" style={{marginBottom:14,borderColor:"rgba(0,147,162,.4)"}}><p className="sec">{form.id?"Editar":"Nuevo"} servicio</p>
-        <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:12}}>
+        <div className="resp-grid" style={{gap:14,marginBottom:12}}>
             <div><label>Nombre *</label><input className="inp" value={form.nombre} onChange={e=>setForm(p=>({...p,nombre:e.target.value}))}/></div>
             <div><label>Precio MXN *</label><input className="inp" type="number" min="0" value={form.precio} onChange={e=>setForm(p=>({...p,precio:e.target.value}))}/></div>
             <div><label>Unidad</label><select className="inp" value={form.unidad} onChange={e=>setForm(p=>({...p,unidad:e.target.value}))}>{["servicio","hora","proyecto","día","mes","pieza"].map(u=><option key={u}>{u}</option>)}</select></div>
