@@ -349,7 +349,7 @@ function Dashboard({cotizaciones,recibos,clientes,setVista,MXN,isMobile}){
       {recientes.length===0?(
         <div style={{textAlign:"center",padding:"30px 20px",color:C.muted}}><div style={{fontSize:34,marginBottom:8,opacity:.3}}>📋</div><p>Sin cotizaciones</p><button className="btn btn-pink" style={{marginTop:10}} onClick={()=>setVista("cotizaciones")}>Crear cotización</button></div>
       ):(
-        <div className="resp-table"><div className="resp-table" style={{width:"100%"}}><table className="tbl">
+        <div className="resp-table"><table className="tbl">
             <thead><tr><th>No.</th><th>Cliente</th><th className="resp-hide">Fecha</th><th>Total</th><th className="resp-hide" style={{color:"#00d9a0"}}>Pagado</th><th className="resp-hide" style={{color:C.pink}}>Restante</th><th>Estado</th></tr></thead>
             <tbody>
               {recientes.map(c=>(
@@ -368,7 +368,7 @@ function Dashboard({cotizaciones,recibos,clientes,setVista,MXN,isMobile}){
                 })()}</tr>
               ))}
             </tbody>
-        </table>
+        </table></div>
       )}
       <div style={{marginTop:16}}><button className="btn btn-ghost" onClick={()=>setVista("cotizaciones")}>Ver todas →</button></div>
       </div>
