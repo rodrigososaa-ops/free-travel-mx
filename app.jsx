@@ -1,3 +1,4 @@
+// v20260310-mobile-fix
 const { useState, useCallback, useEffect, useRef } = React;
 const SUPA_URL = "https://rqitpxealohypyletpps.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxaXRweGVhbG9oeXB5bGV0cHBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDk1NjksImV4cCI6MjA4ODQ4NTU2OX0.CD1NHzcWAOYA1TBikMKzqibLR8wWJkObMYnYT5yASxo";
@@ -188,7 +189,7 @@ function Logo({size=28,white=false}){
 
 function App(){
   const [vista,setVista]=useState("dashboard");
-  const [isMobile,setIsMobile]=useState(window.innerWidth<=768);
+  const [isMobile,setIsMobile]=useState(()=>window.innerWidth<=768);
   useEffect(()=>{
     const fn=()=>setIsMobile(window.innerWidth<=768);
     window.addEventListener("resize",fn);
@@ -207,9 +208,9 @@ function App(){
   const notify=(msg,ok=true)=>{setToast({msg,ok});setTimeout(()=>setToast(null),3000);};
   const NAV=[{id:"dashboard",icon:"▦",label:"Inicio"},{id:"cotizaciones",icon:"📋",label:"Cotizaciones",badge:cotizaciones.length},{id:"recibos",icon:"💳",label:"Recibos",badge:recibos.length},{id:"clientes",icon:"👥",label:"Clientes",badge:clientes.length},{id:"catalogo",icon:"📦",label:"Catálogo"},{id:"empresa",icon:"🏢",label:"Mi Empresa"}];
   return(
-    <div style={{fontFamily:"'Segoe UI',Arial,sans-serif",minHeight:"100vh",background:C.bg,color:C.text,display:"flex"}}>
+    <div style={{fontFamily:"'Segoe UI',Arial,sans-serif",minHeight:"100vh",background:C.bg,color:C.text,display:"flex",width:"100%",overflowX:"hidden"}}>
       {isLoading&&<div style={{position:"fixed",inset:0,background:C.bg,zIndex:999,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}><Logo size={36}/><div style={{color:C.muted,fontSize:13}}>Conectando con la base de datos...</div><div style={{width:200,height:3,background:C.border,borderRadius:3,overflow:"hidden"}}><div style={{width:"60%",height:"100%",background:C.teal,borderRadius:3,animation:"pulse 1.2s ease-in-out infinite"}}/></div></div>}
-      <style>{`*{box-sizing:border-box;margin:0;padding:0}
+      <style>{`*{box-sizing:border-box;margin:0;padding:0}html,body{overflow-x:hidden;width:100%}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#111d26}::-webkit-scrollbar-thumb{background:#1e2f3d;border-radius:3px}
 input,select,textarea{outline:none;font-family:inherit}button{cursor:pointer;font-family:inherit}
 .inp{background:#111d26;border:1px solid #1e2f3d;border-radius:8px;padding:9px 12px;color:#d0e4ef;font-size:13px;width:100%;transition:border .15s}
@@ -269,7 +270,7 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
       ))}
       </div>
       
-      <main className="main" style={{flex:1,padding:"28px 28px 80px",overflowY:"auto",minHeight:"100vh",maxWidth:"100%",overflowX:"hidden"}}>
+      <main className="main" style={{flex:1,padding:"28px 28px 80px",overflowY:"auto",minHeight:"100vh",width:0,minWidth:0,overflowX:"hidden"}}>
       {vista==="dashboard"&&<Dashboard cotizaciones={cotizaciones} recibos={recibos} clientes={clientes} setVista={setVista} MXN={MXN} isMobile={isMobile}/>}{vista==="cotizaciones"&&<Cotizaciones cotizaciones={cotizaciones} setCotizaciones={setCotizaciones} clientes={clientes} catalogo={catalogo} vehiculos={vehiculos} recibos={recibos} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="recibos"&&<Recibos recibos={recibos} setRecibos={setRecibos} cotizaciones={cotizaciones} clientes={clientes} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="clientes"&&<Clientes clientes={clientes} setClientes={setClientes} notify={notify}/>}{vista==="catalogo"&&<Catalogo catalogo={catalogo} setCatalogo={setCatalogo} notify={notify} MXN={MXN}/>}{vista==="empresa"&&<EmpresaView empresa={empresa} setEmpresa={setEmpresa} logoUrl={logoUrl} setLogoUrl={setLogoUrl} vehiculos={vehiculos} setVehiculos={setVehiculos} notify={notify}/>}
       </main>
       {modal&&(<div className="ov" onClick={e=>e.target===e.currentTarget&&setModal(null)}><div className="mdl">
