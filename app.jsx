@@ -249,7 +249,7 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
 @media print{.no-print{display:none!important}body{background:white!important}}`}</style>
       {toast&&<div style={{position:"fixed",top:16,right:16,zIndex:300,background:toast.ok?C.teal:C.pink,color:"#fff",padding:"9px 16px",borderRadius:9,fontWeight:600,fontSize:13}}>{toast.msg}</div>}
       
-      <aside className="sidebar no-print" style={{width:220,background:C.navyD,borderRight:`1px solid ${C.border}`,padding:"0 12px 20px",display:"flex",flexDirection:"column",position:"sticky",top:0,height:"100vh",flexShrink:0}}>
+      {!isMobile&&<aside style={{width:220,background:C.navyD,borderRight:`1px solid ${C.border}`,padding:"0 12px 20px",display:"flex",flexDirection:"column",position:"sticky",top:0,height:"100vh",flexShrink:0}}>
       <div style={{padding:"18px 8px 20px",borderBottom:`1px solid ${C.border}`,marginBottom:10}}>
         <Logo size={22}/>
       </div>
@@ -260,17 +260,17 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
         </button>)}
       </nav>
       
-      </aside>
+      </aside>}
       
-      <div className="mob-nav no-print">
+      {isMobile&&<div className="mob-nav no-print">
       {NAV.map(n=>(
         <button key={n.id} className={`mob-btn ${vista===n.id?"active":""}`} onClick={()=>setVista(n.id)}>
             <span style={{fontSize:17}}>{n.icon}</span><span>{n.label}</span>
         </button>
       ))}
-      </div>
+      </div>}
       
-      <main className="main" style={{flex:1,padding:"28px 28px 80px",overflowY:"auto",minHeight:"100vh",width:0,minWidth:0,overflowX:"hidden"}}>
+      <main className="main" style={{flex:1,padding:isMobile?"12px 10px 80px":"28px 28px 80px",overflowY:"auto",minHeight:"100vh",width:0,minWidth:0,overflowX:"hidden"}}>
       {vista==="dashboard"&&<Dashboard cotizaciones={cotizaciones} recibos={recibos} clientes={clientes} setVista={setVista} MXN={MXN} isMobile={isMobile}/>}{vista==="cotizaciones"&&<Cotizaciones cotizaciones={cotizaciones} setCotizaciones={setCotizaciones} clientes={clientes} catalogo={catalogo} vehiculos={vehiculos} recibos={recibos} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="recibos"&&<Recibos recibos={recibos} setRecibos={setRecibos} cotizaciones={cotizaciones} clientes={clientes} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="clientes"&&<Clientes clientes={clientes} setClientes={setClientes} notify={notify}/>}{vista==="catalogo"&&<Catalogo catalogo={catalogo} setCatalogo={setCatalogo} notify={notify} MXN={MXN}/>}{vista==="empresa"&&<EmpresaView empresa={empresa} setEmpresa={setEmpresa} logoUrl={logoUrl} setLogoUrl={setLogoUrl} vehiculos={vehiculos} setVehiculos={setVehiculos} notify={notify}/>}
       </main>
       {modal&&(<div className="ov" onClick={e=>e.target===e.currentTarget&&setModal(null)}><div className="mdl">
