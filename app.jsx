@@ -187,6 +187,12 @@ function Logo({size=28,white=false}){
 }
 function App(){
   const [vista,setVista]=useState("dashboard");
+  const [isMobile,setIsMobile]=useState(window.innerWidth<=768);
+  useEffect(()=>{
+    const fn=()=>setIsMobile(window.innerWidth<=768);
+    window.addEventListener("resize",fn);
+    return()=>window.removeEventListener("resize",fn);
+  },[]);
   const [empresa,setEmpresa,empLoaded]=useConfig("empresa",DEF_EMP);
   const [logoUrl,setLogoUrl,logoLoaded]=useConfig("logo","");
   const [vehiculos,setVehiculos,vehLoaded]=useConfig("vehiculos",VEHICULOS);
@@ -237,7 +243,7 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
 .flx{display:flex;justify-content:space-between;align-items:center}
 .sub{color:#6b8a9e;font-size:13px;margin-top:2px}
 .mhdr{padding:12px 20px;border-bottom:1px solid #1e2f3d;display:flex;justify-content:space-between;align-items:center}
-@media(max-width:768px){.sidebar{display:none!important}.mob-nav{display:flex!important}.main{margin-left:0!important;padding:14px 12px 80px!important}}
+@media(max-width:768px){.sidebar{display:none!important}.mob-nav{display:flex!important}.main{margin-left:0!important;padding:12px 10px 80px!important}.card{padding:14px 12px!important}.tbl{font-size:11px!important}.tbl th,.tbl td{padding:7px 6px!important}.ov-content{max-width:100%!important;max-height:100vh!important;height:100vh!important;border-radius:0!important;overflow-y:auto!important}.mhdr{padding:14px 12px!important}.resp-grid{grid-template-columns:1fr!important}.resp-table{overflow-x:auto;-webkit-overflow-scrolling:touch}.resp-hide{display:none!important}.resp-stack{flex-direction:column!important;gap:8px!important}.resp-full{width:100%!important}h1{font-size:17px!important}h2{font-size:15px!important}}
 @media print{.no-print{display:none!important}body{background:white!important}}`}</style>
       {toast&&<div style={{position:"fixed",top:16,right:16,zIndex:300,background:toast.ok?C.teal:C.pink,color:"#fff",padding:"9px 16px",borderRadius:9,fontWeight:600,fontSize:13}}>{toast.msg}</div>}
       
@@ -251,7 +257,7 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
             {n.badge>0&&<span style={{background:"rgba(0,147,162,.2)",color:C.teal,fontSize:10,padding:"1px 7px",borderRadius:10,fontWeight:700}}>{n.badge}</span>}
         </button>)}
       </nav>
-      <div style={{fontSize:9,color:"#1e2f3d",textAlign:"center",padding:"6px"}}>Datos locales</div>
+      
       </aside>
       
       <div className="mob-nav no-print">
@@ -262,7 +268,7 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
       ))}
       </div>
       
-      <main className="main" style={{flex:1,padding:"28px 28px 80px",overflowY:"auto",minHeight:"100vh"}}>
+      <main className="main" style={{flex:1,padding:"28px 28px 80px",overflowY:"auto",minHeight:"100vh",maxWidth:"100%",overflowX:"hidden"}}>
       {vista==="dashboard"&&<Dashboard cotizaciones={cotizaciones} recibos={recibos} clientes={clientes} setVista={setVista} MXN={MXN}/>}{vista==="cotizaciones"&&<Cotizaciones cotizaciones={cotizaciones} setCotizaciones={setCotizaciones} clientes={clientes} catalogo={catalogo} vehiculos={vehiculos} recibos={recibos} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="recibos"&&<Recibos recibos={recibos} setRecibos={setRecibos} cotizaciones={cotizaciones} clientes={clientes} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="clientes"&&<Clientes clientes={clientes} setClientes={setClientes} notify={notify}/>}{vista==="catalogo"&&<Catalogo catalogo={catalogo} setCatalogo={setCatalogo} notify={notify} MXN={MXN}/>}{vista==="empresa"&&<EmpresaView empresa={empresa} setEmpresa={setEmpresa} logoUrl={logoUrl} setLogoUrl={setLogoUrl} vehiculos={vehiculos} setVehiculos={setVehiculos} notify={notify}/>}
       </main>
       {modal&&(<div className="ov" onClick={e=>e.target===e.currentTarget&&setModal(null)}><div className="mdl">
@@ -290,7 +296,7 @@ function Dashboard({cotizaciones,recibos,clientes,setVista,MXN}){
       <h1 style={{fontSize:22,fontWeight:700}}>Panel principal</h1>
       <p style={{color:C.muted,fontSize:13,marginTop:3}}>Sistema de cotizaciones y recibos</p>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:22}}>
+      <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:22}}>
         
         <div className="card" style={{borderTop:`3px solid ${C.pink}`}}>
           <div style={{fontSize:12,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>📋 Cotizaciones</div>
@@ -339,8 +345,8 @@ function Dashboard({cotizaciones,recibos,clientes,setVista,MXN}){
       {recientes.length===0?(
         <div style={{textAlign:"center",padding:"30px 20px",color:C.muted}}><div style={{fontSize:34,marginBottom:8,opacity:.3}}>📋</div><p>Sin cotizaciones</p><button className="btn btn-pink" style={{marginTop:10}} onClick={()=>setVista("cotizaciones")}>Crear cotización</button></div>
       ):(
-        <table className="tbl">
-            <thead><tr><th>No.</th><th>Cliente</th><th>Fecha</th><th>Total</th><th style={{color:"#00d9a0"}}>Pagado</th><th style={{color:C.pink}}>Restante</th><th>Estado</th></tr></thead>
+        <div className="resp-table"><table className="tbl">
+            <thead><tr><th>No.</th><th>Cliente</th><th className="resp-hide">Fecha</th><th>Total</th><th className="resp-hide" style={{color:"#00d9a0"}}>Pagado</th><th className="resp-hide" style={{color:C.pink}}>Restante</th><th>Estado</th></tr></thead>
             <tbody>
               {recientes.map(c=>(
                 <tr key={c.id}>{(()=>{
@@ -349,10 +355,10 @@ function Dashboard({cotizaciones,recibos,clientes,setVista,MXN}){
                   return(<>
                     <td style={{fontFamily:"monospace",color:C.pink,fontWeight:600}}>{c.numero}</td>
                     <td>{c.clienteNombre}</td>
-                    <td style={{color:C.muted}}>{c.fecha}</td>
+                    <td className="resp-hide" style={{color:C.muted}}>{c.fecha}</td>
                     <td style={{fontFamily:"monospace",fontWeight:600}}>{MXN(c.total)}</td>
-                    <td style={{fontFamily:"monospace",fontSize:11,color:"#00d9a0",fontWeight:600}}>{pagado>0?MXN(pagado):"—"}</td>
-                    <td style={{fontFamily:"monospace",fontSize:11,color:restante>0?C.pink:"#00d9a0",fontWeight:600}}>{restante>0?MXN(restante):"✓ Saldado"}</td>
+                    <td className="resp-hide" style={{fontFamily:"monospace",fontSize:11,color:"#00d9a0",fontWeight:600}}>{pagado>0?MXN(pagado):"—"}</td>
+                    <td className="resp-hide" style={{fontFamily:"monospace",fontSize:11,color:restante>0?C.pink:"#00d9a0",fontWeight:600}}>{restante>0?MXN(restante):"✓ Saldado"}</td>
                     <td><STag s={c.estatus}/></td>
                   </>);
                 })()}</tr>
@@ -376,7 +382,7 @@ function Cotizaciones({cotizaciones,setCotizaciones,clientes,catalogo,vehiculos,
   const est=(id,e)=>setCotizaciones(p=>p.map(c=>c.id===id?{...c,estatus:e}:c));
   return(
     <div>
-      <div className="flx" style={{marginBottom:14,flexWrap:"wrap",gap:8}}>
+      <div className="flx resp-stack" style={{marginBottom:14,flexWrap:"wrap",gap:8}}>
       <div><h1 style={{fontSize:20,fontWeight:700}}>Cotizaciones</h1><p className="sub">{cotizaciones.length} en total</p></div>
       <button className="btn btn-pink" onClick={nueva}>＋ Nueva cotización</button>
       </div>
@@ -390,7 +396,7 @@ function Cotizaciones({cotizaciones,setCotizaciones,clientes,catalogo,vehiculos,
               <thead><tr><th>No.</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estatus</th><th/></tr></thead>
               <tbody>
                 {fil.map(c=>(
-                  <tr key={c.id}>{(()=>{const pagado=recibos.filter(r=>r.cotizacionRef===c.id).reduce((s,r)=>s+(r.total||0),0);const restante=Math.max(0,(c.total||0)-pagado);return(<><td style={{fontFamily:"monospace",color:C.pink,fontWeight:700}}>{c.numero}</td><td>{c.clienteNombre}</td><td style={{color:C.muted}}>{c.fecha}</td><td style={{fontFamily:"monospace",fontWeight:600}}>{MXN(c.total)}</td><td style={{fontFamily:"monospace",fontSize:11,color:"#00d9a0",fontWeight:600}}>{pagado>0?MXN(pagado):"—"}</td><td style={{fontFamily:"monospace",fontSize:11,color:restante>0?C.pink:"#00d9a0",fontWeight:600}}>{restante>0?MXN(restante):"✓ Saldado"}</td></>);})()}<td><select value={c.estatus} onChange={e=>est(c.id,e.target.value)} style={{background:"transparent",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:c.estatus==="aprobada"?"#00d9a0":c.estatus==="rechazada"?C.pink:"#ff9940"}}><option value="pendiente">pendiente</option><option value="aprobada">aprobada</option><option value="rechazada">rechazada</option></select></td><td><div style={{display:"flex",gap:5,flexWrap:"wrap"}}><button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11}} onClick={()=>ver(c)}>👁</button><button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11}} onClick={()=>editar(c)}>✏️</button>{c.estatus==="aprobada"&&<button className="btn btn-teal" style={{padding:"4px 8px",fontSize:10}} onClick={()=>addToGoogleCalendar(c)}>📅</button>}<button className="btn btn-red" style={{padding:"4px 8px",fontSize:11}} onClick={()=>eliminar(c.id)}>🗑</button></div></td></tr>
+                  <tr key={c.id}>{(()=>{const pagado=recibos.filter(r=>r.cotizacionRef===c.id).reduce((s,r)=>s+(r.total||0),0);const restante=Math.max(0,(c.total||0)-pagado);return(<><td style={{fontFamily:"monospace",color:C.pink,fontWeight:700}}>{c.numero}</td><td>{c.clienteNombre}</td><td className="resp-hide" style={{color:C.muted}}>{c.fecha}</td><td style={{fontFamily:"monospace",fontWeight:600}}>{MXN(c.total)}</td><td className="resp-hide" style={{fontFamily:"monospace",fontSize:11,color:"#00d9a0",fontWeight:600}}>{pagado>0?MXN(pagado):"—"}</td><td className="resp-hide" style={{fontFamily:"monospace",fontSize:11,color:restante>0?C.pink:"#00d9a0",fontWeight:600}}>{restante>0?MXN(restante):"✓ Saldado"}</td></>);})()}<td><select value={c.estatus} onChange={e=>est(c.id,e.target.value)} style={{background:"transparent",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:12,color:c.estatus==="aprobada"?"#00d9a0":c.estatus==="rechazada"?C.pink:"#ff9940"}}><option value="pendiente">pendiente</option><option value="aprobada">aprobada</option><option value="rechazada">rechazada</option></select></td><td><div style={{display:"flex",gap:5,flexWrap:"wrap"}}><button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11}} onClick={()=>ver(c)}>👁</button><button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11}} onClick={()=>editar(c)}>✏️</button>{c.estatus==="aprobada"&&<button className="btn btn-teal" style={{padding:"4px 8px",fontSize:10}} onClick={()=>addToGoogleCalendar(c)}>📅</button>}<button className="btn btn-red" style={{padding:"4px 8px",fontSize:11}} onClick={()=>eliminar(c.id)}>🗑</button></div></td></tr>
                 ))}
               </tbody>
             </table>
@@ -446,7 +452,7 @@ function CotForm({cot,clientes,catalogo,vehiculos,onSave,onClose,MXN}){
     <div>
       <div className="mhdr"><h2 style={{fontSize:15,fontWeight:700}}>{cot?"Editar":"Nueva"} cotización</h2><button className="xbtn" onClick={onClose}>✕</button></div>
       <div style={{padding:"18px 22px"}}>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
+      <div className="resp-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
         <div style={{position:"relative"}}>
             <label>Cliente *</label>
             <ClientSearch clientes={clientes} value={cli} onChange={setCli}/>
@@ -583,7 +589,7 @@ function Recibos({recibos,setRecibos,cotizaciones,clientes,setModal,notify,MXN})
   const del=id=>setRecibos(p=>p.filter(r=>r.id!==id));
   return(
     <div>
-      <div className="flx" style={{marginBottom:14,flexWrap:"wrap",gap:8}}>
+      <div className="flx resp-stack" style={{marginBottom:14,flexWrap:"wrap",gap:8}}>
       <div><h1 style={{fontSize:20,fontWeight:700}}>Recibos de pago</h1><p className="sub">{recibos.length} emitidos</p></div>
       <button className="btn btn-teal" onClick={nuevo}>＋ Nuevo recibo</button>
       </div>
@@ -692,7 +698,7 @@ function Clientes({clientes,setClientes,notify}){
   };
   return(
     <div>
-      <div className="flx" style={{marginBottom:14,flexWrap:"wrap",gap:8}}>
+      <div className="flx resp-stack" style={{marginBottom:14,flexWrap:"wrap",gap:8}}>
       <div><h1 style={{fontSize:20,fontWeight:700}}>Clientes</h1><p className="sub">{clientes.length} clientes</p></div>
       <button className="btn btn-pink" onClick={()=>setForm({nombre:"",empresa:"",email:"",telefono:"",rfc:"",notas:""})}>＋ Nuevo cliente</button>
       </div>
@@ -743,7 +749,7 @@ function Catalogo({catalogo,setCatalogo,notify,MXN}){
   };
   return(
     <div>
-      <div className="flx" style={{marginBottom:14,flexWrap:"wrap",gap:8}}>
+      <div className="flx resp-stack" style={{marginBottom:14,flexWrap:"wrap",gap:8}}>
       <div><h1 style={{fontSize:20,fontWeight:700}}>Catálogo de servicios</h1><p className="sub">{catalogo.length} items</p></div>
       <button className="btn btn-pink" onClick={()=>setForm({nombre:"",precio:"",unidad:"servicio",categoria:"General",descripcion:""})}>＋ Agregar servicio</button>
       </div>
