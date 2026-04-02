@@ -4,19 +4,21 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Free Travel México</title>
+  <meta name="description" content="Sistema de cotizaciones Free Travel México"/>
+  <link rel="icon" type="image/png" href="/favicon.png"/>
+  <!-- Google Identity Services (Calendar OAuth) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- html2canvas + jsPDF para generar PDFs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-    @media print { .no-print { display: none !important; } body { background: white; } }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; }
+    #root { min-height: 100vh; }
   </style>
 </head>
 <body>
   <div id="root"></div>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script type="text/babel" src="app.jsx"></script>
+  <script type="module" src="/src/App.jsx"></script>
 </body>
 </html>
