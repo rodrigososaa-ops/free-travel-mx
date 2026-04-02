@@ -1,15 +1,17 @@
-// v20260310-mobile-fix
-const { useState, useCallback, useEffect, useRef } = React;
+import { useState, useCallback, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom/client';
+import { createClient } from '@supabase/supabase-js';
 const SUPA_URL = "https://rqitpxealohypyletpps.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxaXRweGVhbG9oeXB5bGV0cHBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDk1NjksImV4cCI6MjA4ODQ4NTU2OX0.CD1NHzcWAOYA1TBikMKzqibLR8wWJkObMYnYT5yASxo";
 
 const C = { pink:"#FF0065", teal:"#0093A2", navy:"#1C2B35", navyL:"#253544", navyD:"#111D26", bg:"#0d1520", border:"#1e2f3d", muted:"#6b8a9e", text:"#d0e4ef" };
 
 // Supabase JS client
+let _sbClient = null;
 function getSB() {
-  if(window._sb) return window._sb;
-  window._sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-  return window._sb;
+  if(_sbClient) return _sbClient;
+  _sbClient = createClient(SUPA_URL, SUPA_KEY);
+  return _sbClient;
 }
 
 // Hook for array tables
@@ -931,4 +933,4 @@ function EmpresaView({empresa,setEmpresa,logoUrl,setLogoUrl,vehiculos,setVehicul
 }
 
 
-ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
