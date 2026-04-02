@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { createClient } from '@supabase/supabase-js';
-const SUPA_URL = import.meta.env.VITE_SUPA_URL || "https://rqitpxealohypyletpps.supabase.co";
-const SUPA_KEY = import.meta.env.VITE_SUPA_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxaXRweGVhbG9oeXB5bGV0cHBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDk1NjksImV4cCI6MjA4ODQ4NTU2OX0.CD1NHzcWAOYA1TBikMKzqibLR8wWJkObMYnYT5yASxo";
+const SUPA_URL = "https://rqitpxealohypyletpps.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxaXRweGVhbG9oeXB5bGV0cHBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDk1NjksImV4cCI6MjA4ODQ4NTU2OX0.CD1NHzcWAOYA1TBikMKzqibLR8wWJkObMYnYT5yASxo";
 
 const C = { pink:"#FF0065", teal:"#0093A2", navy:"#1C2B35", navyL:"#253544", navyD:"#111D26", bg:"#0d1520", border:"#1e2f3d", muted:"#6b8a9e", text:"#d0e4ef" };
 
