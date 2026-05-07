@@ -279,7 +279,7 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
       {vista==="dashboard"&&<Dashboard cotizaciones={cotizaciones} recibos={recibos} clientes={clientes} setVista={setVista} MXN={MXN} isMobile={isMobile}/>}{vista==="cotizaciones"&&<Cotizaciones cotizaciones={cotizaciones} setCotizaciones={setCotizaciones} clientes={clientes} catalogo={catalogo} vehiculos={vehiculos} recibos={recibos} asesores={asesores} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="recibos"&&<Recibos recibos={recibos} setRecibos={setRecibos} cotizaciones={cotizaciones} clientes={clientes} asesores={asesores} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="clientes"&&<Clientes clientes={clientes} setClientes={setClientes} notify={notify}/>}{vista==="catalogo"&&<Catalogo catalogo={catalogo} setCatalogo={setCatalogo} notify={notify} MXN={MXN}/>}{vista==="empresa"&&<EmpresaView empresa={empresa} setEmpresa={setEmpresa} logoUrl={logoUrl} setLogoUrl={setLogoUrl} vehiculos={vehiculos} setVehiculos={setVehiculos} asesores={asesores} setAsesores={setAsesores} notify={notify}/>}
       </main>
       {modal&&(<div className="ov" onClick={e=>e.target===e.currentTarget&&setModal(null)}><div className="mdl">
-      {modal.type==="cot-form"&&<CotForm {...modal.props} empresa={empresa} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="rec-form"&&<RecForm {...modal.props} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="cot-preview"&&<CotPreview {...modal.props} empresa={empresa} logoUrl={logoUrl} recibos={recibos} setRecibos={setRecibos} asesores={asesores} setModal={setModal} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="rec-preview"&&<RecPreview {...modal.props} empresa={empresa} recibos={recibos} cotizaciones={cotizaciones} onClose={()=>setModal(null)} MXN={MXN}/>}
+      {modal.type==="cot-form"&&<CotForm {...modal.props} empresa={empresa} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="rec-form"&&<RecForm {...modal.props} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="cot-preview"&&<CotPreview {...modal.props} empresa={empresa} logoUrl={logoUrl} recibos={recibos} setRecibos={setRecibos} asesores={asesores} setModal={setModal} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="rec-preview"&&<RecPreview {...modal.props} empresa={empresa} logoUrl={logoUrl} recibos={recibos} cotizaciones={cotizaciones} onClose={()=>setModal(null)} MXN={MXN}/>}
       </div></div>)}
     </div>
   );
@@ -743,7 +743,7 @@ function RecForm({cotPrellenada,asesores,pendiente,clientes,cotizaciones,onSave,
   );
 }
 
-function RecPreview({rec,empresa,cotizaciones,recibos,onClose,MXN}){
+function RecPreview({rec,empresa,logoUrl,cotizaciones,recibos,onClose,MXN}){
   const [genPDF,setGenPDF]=useState(false);
   const cot=cotizaciones.find(c=>c.id===rec.cotizacionRef);
   const todosAbonos=cot
@@ -753,129 +753,366 @@ function RecPreview({rec,empresa,cotizaciones,recibos,onClose,MXN}){
   const totalPagado=todosAbonos.reduce((s,r)=>s+(r.total||0),0);
   const pendiente=Math.max(0,totalServicio-totalPagado);
   const pagado=totalServicio>0&&pendiente===0;
-  const navy="#1C2B35",teal="#0093A2",pink="#FF0065";
-  const FMT=n=>n?.toLocaleString("es-MX",{style:"currency",currency:"MXN"})||"$0.00";
-  const servicios=cot?.filas?.filter(f=>f.descripcion).map(f=>f.descripcion).join(" · ")||"—";
-  const TC=["El depósito inicial recibido el día de hoy, garantiza el bloqueo de la(s) unidad(es) para su servicio.",
-    "La fecha límite para liquidar el servicio deberá ser como máximo una semana antes del servicio.",
-    "Se cancelará el servicio, sin previo aviso, si cualquiera de los depósitos no se recibe antes de la fecha límite.",
-    "En caso de modificación del servicio, el asesor de ventas deberá autorizar y establecer los cambios en la tarifa.",
-    "El excederse del tiempo establecido para el servicio tendrá un costo de $450 MXN por hora extra.",
-    "Free Travel México no se hace responsable por objetos olvidados.",
-    "Si el cliente presenta mal comportamiento, el operador tendrá la facultad de cancelar el servicio sin reembolso."];
-  const S={
-    wrap:{background:"white",color:"#111",fontSize:12,fontFamily:"'Segoe UI',Arial,sans-serif",maxWidth:780,margin:"0 auto"},
-    hdrNum:{fontWeight:600,fontSize:13},
-    hdrBtns:{display:"flex",gap:8},
-    twoCol:{display:"flex",borderBottom:"2px solid "+teal},
-    col1:{flex:1,padding:"12px 20px",borderRight:"1px solid #e0eaf0"},
-    col2:{flex:1,padding:"12px 20px"},
-    secLabel:{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:6},
-    clientName:{fontWeight:700,fontSize:13,color:navy,marginBottom:2},
-    clientSub:{fontSize:11,color:"#555",marginBottom:2},
-    svcBox:{padding:"10px 20px",background:"#f0f9ff",borderBottom:"1px solid #e0eaf0"},
-    svcTitle:{fontSize:12,color:navy,fontWeight:500},
-    svcSub:{fontSize:11,color:"#555",marginTop:2},
-    histBox:{padding:"12px 20px",borderBottom:"1px solid #e0eaf0"},
-    histRow:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,paddingBottom:8,borderBottom:"1px dashed #e0eaf0"},
-    totalLabel:{fontSize:12,color:"#555"},
-    totalAmt:{fontWeight:700,color:navy,fontFamily:"monospace",fontSize:13},
-    pendRow:{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:10,paddingTop:10,borderTop:"2px solid #e0eaf0"},
-    pendLabel:{fontSize:13,fontWeight:700},
-    tcBox:{padding:"10px 20px",background:"#f9fafb",borderBottom:"1px solid #e0eaf0"},
-    tcLabel:{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:6},
-    tcItem:{fontSize:9,color:"#555",marginBottom:3,lineHeight:1.4},
-    footerData:{padding:"10px 20px",display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:8,background:"#f4f8fb",borderBottom:"1px solid #e0eaf0"},
-    footerLeft:{fontSize:10,color:"#555"},
-    footerRight:{fontSize:10,color:"#555",textAlign:"right"},
-    footerBar:{background:navy,padding:"8px 20px",textAlign:"center",color:"rgba(255,255,255,.75)",fontSize:11,fontWeight:600},
-    empName:{fontWeight:700,color:navy,marginBottom:3},
-    statusBadge:{textAlign:"center",marginTop:12},
+  const FMT=n=>(n||0).toLocaleString("es-MX",{style:"currency",currency:"MXN"});
+  const servicios=cot?.filas?.filter(f=>f.descripcion).map(f=>f.descripcion).join(", ")||"Servicio de transporte";
+  const TC=["El depósito inicial recibido el día de hoy, garantiza el bloqueo de la(s) unidad(es) para su servicio.","La fecha límite para liquidar el servicio deberá ser como máximo una semana antes del servicio.","Se cancelará el servicio, sin previo aviso, si cualquiera de los depósitos no se recibe antes de la fecha límite.","En caso de modificación del servicio, el asesor de ventas deberá autorizar y establecer los cambios en la tarifa.","El excederse del tiempo establecido para el servicio tendrá un costo de $450 MXN por hora extra.","Free Travel México no se hace responsable por objetos olvidados.","Si el cliente presenta mal comportamiento, el operador tendrá la facultad de cancelar el servicio sin reembolso."];
+  const pink="#FF0065",teal="#0093A2",navy="#1C2B35";
+
+  const hexToRgb=hex=>{
+    const r=parseInt(hex.slice(1,3),16);
+    const g=parseInt(hex.slice(3,5),16);
+    const b=parseInt(hex.slice(5,7),16);
+    return [r,g,b];
   };
+
+  const wrapText=(doc,text,x,y,maxW,lineH)=>{
+    const lines=doc.splitTextToSize(text,maxW);
+    lines.forEach(l=>{doc.text(l,x,y);y+=lineH;});
+    return y;
+  };
+
+  const generarPDF=async()=>{
+    setGenPDF(true);
+    try{
+      const {jsPDF}=window.jspdf;
+      const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"letter"});
+      const W=215.9,M=14,cW=W-M*2;
+      let y=M;
+
+      // Header background
+      doc.setFillColor(...hexToRgb(navy));
+      doc.rect(0,0,W,30,"F");
+
+      // Logo or company name
+      if(logoUrl){
+        try{
+          doc.addImage(logoUrl,"PNG",M,7,50,16);
+        }catch(e){
+          doc.setTextColor(255,255,255);
+          doc.setFontSize(14);doc.setFont("helvetica","bold");
+          doc.text(empresa.nombre||"Free Travel México",M,18);
+        }
+      } else {
+        doc.setTextColor(255,255,255);
+        doc.setFontSize(14);doc.setFont("helvetica","bold");
+        doc.text(empresa.nombre||"Free Travel México",M,18);
+      }
+
+      // Folio and status
+      doc.setTextColor(180,200,220);
+      doc.setFontSize(7);doc.setFont("helvetica","normal");
+      doc.text("COMPROBANTE DE PAGO",W-M,10,{align:"right"});
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(16);doc.setFont("helvetica","bold");
+      doc.text(rec.numero,W-M,18,{align:"right"});
+      const badgeColor=pagado?teal:pink;
+      doc.setFillColor(...hexToRgb(badgeColor));
+      const badgeW=24,badgeH=5;
+      doc.roundedRect(W-M-badgeW,22,badgeW,badgeH,2,2,"F");
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(7);doc.setFont("helvetica","bold");
+      doc.text(pagado?"PAGADO":"ABONADO",W-M-badgeW/2,25.5,{align:"center"});
+
+      y=36;
+
+      // Divider line
+      doc.setDrawColor(...hexToRgb(teal));
+      doc.setLineWidth(0.5);
+      doc.line(M,y,W-M,y);
+      y+=5;
+
+      // Two columns: Cliente | Info abono
+      const colW=(cW-6)/2;
+      const col2x=M+colW+6;
+
+      doc.setFillColor(248,250,252);
+      doc.rect(M,y-2,cW,28,"F");
+
+      // Cliente
+      doc.setTextColor(...hexToRgb(teal));
+      doc.setFontSize(7);doc.setFont("helvetica","bold");
+      doc.text("CLIENTE",M+3,y+3);
+
+      doc.setTextColor(...hexToRgb(navy));
+      doc.setFontSize(11);doc.setFont("helvetica","bold");
+      doc.text(rec.clienteNombre||"",M+3,y+9);
+
+      doc.setFontSize(8);doc.setFont("helvetica","normal");
+      doc.setTextColor(80,80,80);
+      let cy=y+14;
+      if(rec.clienteEmpresa){doc.text(rec.clienteEmpresa,M+3,cy);cy+=4;}
+      if(rec.clienteTelefono){doc.text("Tel: "+rec.clienteTelefono,M+3,cy);cy+=4;}
+      if(rec.clienteEmail){doc.text(rec.clienteEmail,M+3,cy);}
+
+      // Info abono
+      doc.setTextColor(...hexToRgb(teal));
+      doc.setFontSize(7);doc.setFont("helvetica","bold");
+      doc.text("INFORMACIÓN DEL ABONO",col2x,y+3);
+
+      const infoRows=[
+        ["Fecha de pago:", rec.fechaPago||rec.fecha||""],
+        ["Asesor:", rec.asesor||empresa.ejecutivo||""],
+        ["Método:", rec.metodoPago||""],
+        ...(rec.referencia?[["Ref. operación:", rec.referencia]]:[]),
+        ...(cot?[["Cotización:", cot.numero]]:[]),
+      ];
+      let iy=y+9;
+      infoRows.forEach(([k,v])=>{
+        doc.setFontSize(8);doc.setFont("helvetica","normal");doc.setTextColor(120,120,120);
+        doc.text(k,col2x,iy);
+        doc.setTextColor(...hexToRgb(navy));doc.setFont("helvetica","bold");
+        doc.text(v,col2x+30,iy);
+        iy+=4.5;
+      });
+
+      y+=32;
+
+      // Servicio contratado
+      doc.setFillColor(240,249,255);
+      doc.rect(M,y-1,cW,12,"F");
+      doc.setDrawColor(...hexToRgb(teal));
+      doc.setLineWidth(0.8);
+      doc.line(M,y-1,M,y+11);
+      doc.setTextColor(...hexToRgb(teal));
+      doc.setFontSize(7);doc.setFont("helvetica","bold");
+      doc.text("SERVICIO CONTRATADO",M+3,y+3);
+      doc.setTextColor(...hexToRgb(navy));
+      doc.setFontSize(9);doc.setFont("helvetica","bold");
+      const svcLines=doc.splitTextToSize(servicios,cW-6);
+      doc.text(svcLines[0]||servicios,M+3,y+8);
+      y+=16;
+
+      // Historial de pagos header
+      doc.setTextColor(...hexToRgb(teal));
+      doc.setFontSize(7);doc.setFont("helvetica","bold");
+      doc.text("HISTORIAL DE PAGOS",M,y);
+      y+=4;
+
+      // Table header
+      doc.setFillColor(...hexToRgb(navy));
+      doc.rect(M,y,cW,6,"F");
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(8);doc.setFont("helvetica","bold");
+      doc.text("Abono",M+2,y+4);
+      doc.text("Fecha",M+25,y+4);
+      doc.text("Método",M+65,y+4);
+      doc.text("Importe",W-M-2,y+4,{align:"right"});
+      y+=6;
+
+      // Table rows
+      todosAbonos.forEach((r,i)=>{
+        const isThis=r.id===rec.id;
+        if(isThis){
+          doc.setFillColor(240,253,244);
+          doc.rect(M,y,cW,6,"F");
+        } else if(i%2===0){
+          doc.setFillColor(250,252,255);
+          doc.rect(M,y,cW,6,"F");
+        }
+        doc.setTextColor(...hexToRgb(navy));
+        doc.setFontSize(8);
+        doc.setFont("helvetica",isThis?"bold":"normal");
+        doc.text(`#${i+1}${isThis?" ←":""}`,M+2,y+4);
+        doc.setFont("helvetica","normal");
+        doc.text(r.fechaPago||r.fecha||"",M+25,y+4);
+        doc.text(r.metodoPago||"",M+65,y+4);
+        doc.setFont("helvetica","bold");
+        doc.setTextColor(5,150,105);
+        doc.text(FMT(r.total),W-M-2,y+4,{align:"right"});
+        doc.setDrawColor(230,235,240);
+        doc.setLineWidth(0.2);
+        doc.line(M,y+6,W-M,y+6);
+        y+=6;
+      });
+      y+=3;
+
+      // Totals
+      doc.setFillColor(248,250,252);
+      doc.rect(M,y,cW,7,"F");
+      doc.setTextColor(100,100,100);
+      doc.setFontSize(8);doc.setFont("helvetica","normal");
+      doc.text("Total del servicio",M+3,y+5);
+      doc.setTextColor(...hexToRgb(navy));doc.setFont("helvetica","bold");
+      doc.text(FMT(totalServicio),W-M-2,y+5,{align:"right"});
+      y+=7;
+
+      const pendBg=pagado?[240,253,244]:[255,247,237];
+      const pendColor=pagado?[5,150,105]:hexToRgb(pink);
+      doc.setFillColor(...pendBg);
+      doc.rect(M,y,cW,8,"F");
+      doc.setDrawColor(...pendColor);
+      doc.setLineWidth(0.4);
+      doc.rect(M,y,cW,8,"S");
+      doc.setTextColor(40,40,40);
+      doc.setFontSize(9);doc.setFont("helvetica","bold");
+      doc.text("IMPORTE PENDIENTE",M+3,y+5.5);
+      doc.setTextColor(...pendColor);
+      doc.setFontSize(12);
+      doc.text(FMT(pendiente),W-M-2,y+6,{align:"right"});
+      y+=12;
+
+      // Terms
+      doc.setTextColor(120,120,120);
+      doc.setFontSize(6.5);doc.setFont("helvetica","bold");
+      doc.text("TÉRMINOS Y CONDICIONES",M,y);
+      y+=4;
+      doc.setFont("helvetica","normal");
+      doc.setTextColor(90,90,90);
+      const half=Math.ceil(TC.length/2);
+      TC.forEach((t,i)=>{
+        const cx=i<half?M:M+cW/2+3;
+        const ty=i<half?y+(i*5):y+((i-half)*5);
+        const lines=doc.splitTextToSize(`${i+1}. ${t}`,cW/2-3);
+        lines.forEach((l,li)=>doc.text(l,cx,ty+li*3.5));
+      });
+      y+=half*5+3;
+
+      // Footer
+      doc.setFillColor(...hexToRgb(navy));
+      doc.rect(0,y,W,30,"F");
+      doc.setTextColor(180,200,220);
+      doc.setFontSize(7);doc.setFont("helvetica","normal");
+      doc.text(empresa.nombre||"Free Travel México",M,y+6);
+      doc.text("RFC: "+(empresa.rfc||""),M,y+10);
+      doc.text((empresa.bancoBanco||"BBVA")+" Cta: "+(empresa.bancoCuenta||""),M,y+14);
+      doc.text("CLABE: "+(empresa.bancoClabe||""),M,y+18);
+      doc.text(empresa.telefono||"",W-M,y+6,{align:"right"});
+      doc.text(empresa.email||"",W-M,y+10,{align:"right"});
+      doc.setTextColor(...hexToRgb(teal));
+      doc.text(empresa.web||"",W-M,y+14,{align:"right"});
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(8);doc.setFont("helvetica","bold");
+      doc.text("¡Gracias por su preferencia!",W/2,y+24,{align:"center"});
+
+      doc.save(`${rec.numero}.pdf`);
+    }catch(e){
+      console.error("PDF error:",e);
+      alert("Error al generar PDF: "+e.message);
+    }
+    setGenPDF(false);
+  };
+
   return(
   <div>
     <div className="no-print mhdr">
-      <div style={S.hdrNum}>{rec.numero}</div>
-      <div style={S.hdrBtns}>
-        <button className="btn btn-green" disabled={genPDF} onClick={async()=>{setGenPDF(true);await generatePDF("rec-print-area",`${rec.numero}.pdf`);setGenPDF(false);}}>
+      <div style={{fontWeight:600,fontSize:13}}>{rec.numero}</div>
+      <div style={{display:"flex",gap:8}}>
+        <button className="btn btn-green" disabled={genPDF} onClick={generarPDF}>
           {genPDF?"Generando...":"⬇️ PDF"}
         </button>
         <button className="xbtn" onClick={onClose}>✕</button>
       </div>
     </div>
-    <div id="rec-print-area" style={S.wrap}>
-      <DocHeader numero={rec.numero} tipo="COMPROBANTE DE PAGO" empresa={empresa}/>
-      <div style={S.twoCol}>
-        <div style={S.col1}>
-          <div style={S.secLabel}>Cliente</div>
-          <div style={S.clientName}>{rec.clienteNombre}</div>
-          {rec.clienteEmpresa&&<div style={S.clientSub}>{rec.clienteEmpresa}</div>}
-          {rec.clienteTelefono&&<div style={S.clientSub}>📱 {rec.clienteTelefono}</div>}
-          {rec.clienteEmail&&<div style={S.clientSub}>✉️ {rec.clienteEmail}</div>}
-        </div>
-        <div style={S.col2}>
-          <div style={S.secLabel}>Datos del abono</div>
-          <div style={S.clientSub}>Fecha: <strong style={S.hdrNum}>{rec.fechaPago||rec.fecha}</strong></div>
-          <div style={S.clientSub}>Asesor: <strong>{rec.asesor||empresa.ejecutivo||""}</strong></div>
-          <div style={S.clientSub}>Método: <strong>{rec.metodoPago}</strong></div>
-          {rec.referencia&&<div style={S.clientSub}>Ref: <strong>{rec.referencia}</strong></div>}
-        </div>
-      </div>
-      {cot&&<div style={S.svcBox}>
-        <div style={S.secLabel}>Servicio contratado — {cot.numero}</div>
-        <div style={S.svcTitle}>{servicios}</div>
-        {rec.concepto&&<div style={S.svcSub}>Concepto abono: {rec.concepto}</div>}
-      </div>}
-      <div style={S.histBox}>
-        <div style={S.secLabel}>Historial de pagos</div>
-        <div style={S.histRow}>
-          <span style={S.totalLabel}>Total del servicio</span>
-          <span style={S.totalAmt}>{FMT(totalServicio)}</span>
-        </div>
-        {todosAbonos.map((r,i)=>{
-          const isThis=r.id===rec.id;
-          const rowStyle={display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,padding:"6px 10px",borderRadius:6,background:isThis?"#f0fdf4":"#f9fafb",border:isThis?"1px solid #00d9a0":"1px solid transparent"};
-          const numStyle={fontSize:11,fontWeight:600,color:navy};
-          const subStyle={fontSize:10,color:"#777"};
-          const amtStyle={fontWeight:700,color:"#059669",fontFamily:"monospace"};
-          return(
-          <div key={r.id||i} style={rowStyle}>
-            <div>
-              <div style={numStyle}>Abono {i+1} {isThis?"← este recibo":""}</div>
-              <div style={subStyle}>{r.fechaPago||r.fecha} · {r.metodoPago}{r.referencia?` · Ref: ${r.referencia}`:""}</div>
-            </div>
-            <span style={amtStyle}>{FMT(r.total)}</span>
-          </div>);
-        })}
-        <div style={S.pendRow}>
-          <span style={S.pendLabel}>Importe pendiente</span>
-          <span style={Object.assign({fontSize:15,fontWeight:800,fontFamily:"monospace"},{color:pendiente>0?pink:"#059669"})}>{FMT(pendiente)}</span>
-        </div>
-        <div style={S.statusBadge}>
-          <span style={Object.assign({color:"white",fontWeight:800,fontSize:13,padding:"5px 24px",borderRadius:20,letterSpacing:".05em"},{background:pagado?"#059669":"#f59e0b"})}>
+    <div style={{background:"white",fontFamily:"Arial,sans-serif",fontSize:12,color:"#222",maxWidth:700,margin:"0 auto",padding:20}}>
+
+      <div style={{background:navy,padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",borderRadius:"6px 6px 0 0"}}>
+        {logoUrl
+          ? <img src={logoUrl} style={{height:36,maxWidth:160,objectFit:"contain",filter:"brightness(0) invert(1)"}} alt="logo"/>
+          : <div style={{color:"white",fontWeight:800,fontSize:15}}>{empresa.nombre}</div>
+        }
+        <div style={{textAlign:"right"}}>
+          <div style={{color:"rgba(255,255,255,.5)",fontSize:8,letterSpacing:1}}>COMPROBANTE DE PAGO</div>
+          <div style={{color:"white",fontSize:18,fontWeight:800,fontFamily:"monospace"}}>{rec.numero}</div>
+          <span style={{background:pagado?teal:pink,color:"white",fontSize:9,fontWeight:700,padding:"2px 10px",borderRadius:10}}>
             {pagado?"✓ PAGADO":"● ABONADO"}
           </span>
         </div>
       </div>
-      <div style={S.tcBox}>
-        <div style={S.tcLabel}>Términos y Condiciones</div>
-        {TC.map((t,i)=><div key={i} style={S.tcItem}>{i+1}. {t}</div>)}
+
+      <div style={{display:"flex",border:"1px solid #e5e7eb",borderTop:"none"}}>
+        <div style={{flex:1,padding:"12px 16px",borderRight:"1px solid #e5e7eb"}}>
+          <div style={{fontSize:9,fontWeight:700,color:teal,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Cliente</div>
+          <div style={{fontWeight:700,fontSize:13,color:navy,marginBottom:3}}>{rec.clienteNombre}</div>
+          {rec.clienteEmpresa&&<div style={{color:"#555",fontSize:11,marginBottom:2}}>{rec.clienteEmpresa}</div>}
+          {rec.clienteTelefono&&<div style={{color:"#555",fontSize:11,marginBottom:2}}>📱 {rec.clienteTelefono}</div>}
+          {rec.clienteEmail&&<div style={{color:"#555",fontSize:11}}>✉️ {rec.clienteEmail}</div>}
+        </div>
+        <div style={{flex:1,padding:"12px 16px"}}>
+          <div style={{fontSize:9,fontWeight:700,color:teal,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Información del abono</div>
+          <table style={{width:"100%",fontSize:11,borderCollapse:"collapse"}}>
+            <tbody>
+              {[["Fecha de pago",rec.fechaPago||rec.fecha],["Asesor",rec.asesor||empresa.ejecutivo||""],["Método",rec.metodoPago],...(rec.referencia?[["Ref.",rec.referencia]]:[])]
+                .map(([k,v],i)=>(
+                <tr key={i}>
+                  <td style={{color:"#888",paddingBottom:4,paddingRight:8,whiteSpace:"nowrap"}}>{k}</td>
+                  <td style={{fontWeight:600,color:navy,paddingBottom:4}}>{v}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div style={S.footerData}>
-        <div style={S.footerLeft}>
-          <div style={S.empName}>{empresa.nombre}</div>
+
+      <div style={{padding:"8px 16px",background:"#f0f9ff",borderLeft:"3px solid "+teal,borderBottom:"1px solid #e5e7eb",borderRight:"1px solid #e5e7eb"}}>
+        <div style={{fontSize:9,fontWeight:700,color:teal,textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Servicio contratado{cot?" — "+cot.numero:""}</div>
+        <div style={{color:navy,fontWeight:600,fontSize:12}}>{servicios}</div>
+        {rec.concepto&&<div style={{color:"#666",fontSize:11,marginTop:2}}>Concepto: {rec.concepto}</div>}
+      </div>
+
+      <div style={{border:"1px solid #e5e7eb",borderTop:"none"}}>
+        <div style={{padding:"8px 16px",borderBottom:"1px solid #e5e7eb"}}>
+          <div style={{fontSize:9,fontWeight:700,color:teal,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Historial de pagos</div>
+          <table style={{width:"100%",fontSize:11,borderCollapse:"collapse"}}>
+            <thead>
+              <tr style={{background:navy}}>
+                <th style={{color:"white",padding:"5px 8px",fontWeight:600,textAlign:"left",fontSize:10}}>Abono</th>
+                <th style={{color:"white",padding:"5px 8px",fontWeight:600,textAlign:"left",fontSize:10}}>Fecha</th>
+                <th style={{color:"white",padding:"5px 8px",fontWeight:600,textAlign:"left",fontSize:10}}>Método</th>
+                <th style={{color:"white",padding:"5px 8px",fontWeight:600,textAlign:"right",fontSize:10}}>Importe</th>
+              </tr>
+            </thead>
+            <tbody>
+              {todosAbonos.map((r,i)=>{
+                const isThis=r.id===rec.id;
+                return(
+                <tr key={r.id||i} style={{background:isThis?"#f0fdf4":i%2===0?"white":"#f9fafb",borderBottom:"1px solid #f0f0f0"}}>
+                  <td style={{padding:"5px 8px",fontWeight:isThis?700:400,color:navy}}>#{i+1}{isThis?" ←":""}</td>
+                  <td style={{padding:"5px 8px",color:"#555"}}>{r.fechaPago||r.fecha}</td>
+                  <td style={{padding:"5px 8px",color:"#555"}}>{r.metodoPago}</td>
+                  <td style={{padding:"5px 8px",textAlign:"right",fontWeight:700,color:"#059669",fontFamily:"monospace"}}>{FMT(r.total)}</td>
+                </tr>);
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",padding:"6px 16px",background:"#f8fafc",borderBottom:"1px solid #e5e7eb"}}>
+          <span style={{color:"#666"}}>Total del servicio</span>
+          <span style={{fontWeight:700,color:navy,fontFamily:"monospace"}}>{FMT(totalServicio)}</span>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 16px",background:pagado?"#f0fdf4":"#fff7ed",border:pendiente>0?"1px solid #fed7aa":"1px solid #bbf7d0",margin:"0 -1px"}}>
+          <span style={{fontWeight:700,fontSize:12}}>Importe pendiente</span>
+          <span style={{fontWeight:800,fontSize:16,color:pendiente>0?pink:"#059669",fontFamily:"monospace"}}>{FMT(pendiente)}</span>
+        </div>
+      </div>
+
+      <div style={{padding:"8px 16px",border:"1px solid #e5e7eb",borderTop:"none",background:"#fafafa"}}>
+        <div style={{fontSize:9,fontWeight:700,color:"#888",textTransform:"uppercase",letterSpacing:1,marginBottom:5}}>Términos y Condiciones</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 16px"}}>
+          {TC.map((t,i)=>(
+            <div key={i} style={{fontSize:9,color:"#666",lineHeight:1.4}}>
+              <span style={{fontWeight:700,color:teal}}>{i+1}.</span> {t}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{display:"flex",justifyContent:"space-between",padding:"10px 16px",background:navy,borderRadius:"0 0 6px 6px",marginTop:0}}>
+        <div style={{fontSize:9,color:"rgba(255,255,255,.7)",lineHeight:1.8}}>
+          <div style={{fontWeight:700,color:"white",marginBottom:2}}>{empresa.nombre}</div>
           <div>RFC: {empresa.rfc}</div>
-          <div>{empresa.bancoBanco||"BBVA"}: {empresa.bancoCuenta||""}</div>
+          <div>{empresa.bancoBanco||"BBVA"} · Cta: {empresa.bancoCuenta||""}</div>
           <div>CLABE: {empresa.bancoClabe||""}</div>
         </div>
-        <div style={S.footerRight}>
+        <div style={{fontSize:9,color:"rgba(255,255,255,.7)",textAlign:"right",lineHeight:1.8}}>
           <div>{empresa.direccion}</div>
           <div>Tel: {empresa.telefono}</div>
           <div>{empresa.email}</div>
-          <div>{empresa.web}</div>
+          <div style={{color:teal}}>{empresa.web}</div>
         </div>
       </div>
-      <div style={S.footerBar}>¡Gracias por su preferencia!</div>
+      <div style={{background:"#0a1a24",padding:"6px",textAlign:"center",color:"rgba(255,255,255,.5)",fontSize:10,borderRadius:"0 0 6px 6px"}}>
+        ¡Gracias por su preferencia!
+      </div>
     </div>
   </div>
 );}
