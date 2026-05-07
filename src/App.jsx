@@ -278,7 +278,7 @@ label{font-size:12px;color:#6b8a9e;font-weight:500;display:block;margin-bottom:5
       {vista==="dashboard"&&<Dashboard cotizaciones={cotizaciones} recibos={recibos} clientes={clientes} setVista={setVista} MXN={MXN} isMobile={isMobile}/>}{vista==="cotizaciones"&&<Cotizaciones cotizaciones={cotizaciones} setCotizaciones={setCotizaciones} clientes={clientes} catalogo={catalogo} vehiculos={vehiculos} recibos={recibos} asesores={asesores} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="recibos"&&<Recibos recibos={recibos} setRecibos={setRecibos} cotizaciones={cotizaciones} clientes={clientes} asesores={asesores} setModal={setModal} notify={notify} MXN={MXN}/>}{vista==="clientes"&&<Clientes clientes={clientes} setClientes={setClientes} notify={notify}/>}{vista==="catalogo"&&<Catalogo catalogo={catalogo} setCatalogo={setCatalogo} notify={notify} MXN={MXN}/>}{vista==="empresa"&&<EmpresaView empresa={empresa} setEmpresa={setEmpresa} logoUrl={logoUrl} setLogoUrl={setLogoUrl} vehiculos={vehiculos} setVehiculos={setVehiculos} asesores={asesores} setAsesores={setAsesores} notify={notify}/>}
       </main>
       {modal&&(<div className="ov" onClick={e=>e.target===e.currentTarget&&setModal(null)}><div className="mdl">
-      {modal.type==="cot-form"&&<CotForm {...modal.props} empresa={empresa} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="rec-form"&&<RecForm {...modal.props} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="cot-preview"&&<CotPreview {...modal.props} empresa={empresa} logoUrl={logoUrl} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="rec-preview"&&<RecPreview {...modal.props} empresa={empresa} recibos={recibos} onClose={()=>setModal(null)} MXN={MXN}/>}
+      {modal.type==="cot-form"&&<CotForm {...modal.props} empresa={empresa} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="rec-form"&&<RecForm {...modal.props} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="cot-preview"&&<CotPreview {...modal.props} empresa={empresa} logoUrl={logoUrl} recibos={recibos} setRecibos={setRecibos} asesores={asesores} setModal={setModal} onClose={()=>setModal(null)} MXN={MXN}/>}{modal.type==="rec-preview"&&<RecPreview {...modal.props} empresa={empresa} recibos={recibos} onClose={()=>setModal(null)} MXN={MXN}/>}
       </div></div>)}
     </div>
   );
@@ -505,11 +505,24 @@ function CotForm({cot,clientes,catalogo,vehiculos,onSave,onClose,MXN}){
 }
 function DocHeader({numero,tipo,logoUrl}){return(<><div style={{background:"white",borderBottom:"1px solid #e5e7eb",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 24px"}}>{logoUrl?<img src={logoUrl} style={{height:44,maxWidth:240,objectFit:"contain"}} alt="logo"/>:<Logo size={22}/>}<div style={{textAlign:"right"}}><div style={{color:"#9ca3af",fontSize:10,fontWeight:600}}>FOLIO</div><div style={{color:C.navy,fontSize:18,fontWeight:800,fontFamily:"monospace"}}>{numero}</div><div style={{color:C.teal,fontSize:11,fontWeight:700}}>{tipo}</div></div></div><div style={{height:4,background:`linear-gradient(90deg,${C.pink},${C.teal})`}}/></>);}
 function DocFooter({empresa}){return(<div style={{background:C.navy,padding:"7px 22px",display:"flex",justifyContent:"flex-end",alignItems:"center"}}><div style={{textAlign:"right"}}><div style={{color:"rgba(255,255,255,.5)",fontSize:10}}>{empresa.email} · {empresa.telefono}</div>{empresa.web&&<div style={{color:C.teal,fontSize:10,fontWeight:600}}>{empresa.web}</div>}</div></div>);}
-function CotPreview({cot,empresa,logoUrl,onClose,MXN}){
+function CotPreview({cot,empresa,logoUrl,recibos,setRecibos,asesores,setModal,onClose,MXN}){
   const [genPDF,setGenPDF]=useState(false);
   return(
     <div>
-      <div className="no-print mhdr"><div style={{fontWeight:600,fontSize:13}}>{cot.numero}</div><div style={{display:"flex",gap:8}}><button className="btn btn-green" disabled={genPDF} onClick={async()=>{setGenPDF(true);await generatePDF("cot-print-area",`${cot.numero}.pdf`);setGenPDF(false);}}>{genPDF?"Generando...":"⬇️ PDF"}</button><button className="xbtn" onClick={onClose}>✕</button></div></div>
+      <div className="no-print mhdr"><div style={{fontWeight:600,fontSize:13}}>{cot.numero}</div><div style={{display:"flex",gap:8}}>
+      <button className="btn btn-teal" onClick={()=>{
+        const abonosExistentes=recibos.filter(r=>r.cotizacionRef===cot.id);
+        const totalAbonado=abonosExistentes.reduce((s,r)=>s+(r.total||0),0);
+        const pendiente=Math.max(0,(cot.total||0)-totalAbonado);
+        if(pendiente===0){alert("Este servicio ya está liquidado.");return;}
+        setModal({type:"rec-form",props:{
+          cotPrellenada:cot,
+          asesores,
+          pendiente,
+          onSave(d){setRecibos(p=>[{...d,id:UID(),numero:FOLIO("REC",p),fecha:TODAY()},...p]);onClose();}
+        }});
+      }}>💰 Agregar abono</button>
+      <button className="btn btn-green" disabled={genPDF} onClick={async()=>{setGenPDF(true);await generatePDF("cot-print-area",`${cot.numero}.pdf`);setGenPDF(false);}}>{genPDF?"Generando...":"⬇️ PDF"}</button><button className="xbtn" onClick={onClose}>✕</button></div></div>
       <div id="cot-print-area" style={{background:"white",color:"#111",fontSize:12}}>
       <DocHeader numero={cot.numero} tipo="COTIZACIÓN" empresa={empresa} logoUrl={logoUrl}/>
       <div style={{padding:"10px 22px",display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:8,borderBottom:`2px solid ${C.teal}`}}>
@@ -589,87 +602,141 @@ function CotPreview({cot,empresa,logoUrl,onClose,MXN}){
 }
 function Recibos({recibos,setRecibos,cotizaciones,clientes,asesores,setModal,notify,MXN}){
   const [q,setQ]=useState("");
-  const fil=recibos.filter(r=>(r.numero+r.clienteNombre).toLowerCase().includes(q.toLowerCase()));
-  const nuevo=()=>setModal({type:"rec-form",props:{clientes,cotizaciones,asesores,onSave(d){setRecibos(p=>[{...d,id:UID(),numero:FOLIO("REC",p),fecha:TODAY()},...p]);notify("✓ Recibo creado");}}});
+  const fil=recibos.filter(r=>(r.numero+r.clienteNombre+(r.cotizacionRef||"")).toLowerCase().includes(q.toLowerCase()));
   const ver=r=>setModal({type:"rec-preview",props:{rec:r}});
   const del=id=>setRecibos(p=>p.filter(r=>r.id!==id));
+  const FMT=n=>n?.toLocaleString("es-MX",{style:"currency",currency:"MXN"})||"$0.00";
   return(
     <div>
       <div className="flx resp-stack" style={{marginBottom:14,flexWrap:"wrap",gap:8}}>
-      <div><h1 style={{fontSize:20,fontWeight:700}}>Recibos de pago</h1><p className="sub">{recibos.length} emitidos</p></div>
-      <button className="btn btn-teal" onClick={nuevo}>＋ Nuevo recibo</button>
+        <div><h1 style={{fontSize:20,fontWeight:700}}>Recibos de pago</h1><p className="sub">{recibos.length} registrados</p></div>
       </div>
-      <div className="srch"><span style={{color:C.muted}}>🔍</span><input placeholder="Buscar..." value={q} onChange={e=>setQ(e.target.value)}/></div>
-      {fil.length===0?(
-      <div className="card" style={{textAlign:"center",padding:"36px 16px",color:C.muted}}>
-        <div style={{fontSize:38,opacity:.3,marginBottom:12}}>💳</div>
-        <p>No hay recibos aún</p>
-        <button className="btn btn-teal" style={{marginTop:14}} onClick={nuevo}>Crear recibo</button>
-      </div>
-      ):(
-      <div className="card" style={{padding:0,overflow:"hidden"}}><div style={{overflowX:"auto"}}>
-            <table className="tbl">
-              <thead><tr><th>No.</th><th>Cliente</th><th>Fecha</th><th>Concepto</th><th>Total</th><th>Método</th><th/></tr></thead>
-              <tbody>{fil.map(r=><tr key={r.id}>
-                <td style={{fontFamily:"monospace",color:"#00d9a0",fontWeight:700}}>{r.numero}</td>
-                <td>{r.clienteNombre}</td><td style={{color:C.muted}}>{r.fecha}</td>
-                <td style={{maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.concepto}</td>
-                <td style={{fontFamily:"monospace",fontWeight:600,color:"#00d9a0"}}>{MXN(r.total)}</td>
-                <td><span style={{background:"#0a2520",color:"#00d9a0",border:"1px solid #0a3530",display:"inline-flex",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:600}}>{r.metodoPago}</span></td>
-                <td><div style={{display:"flex",gap:6}}>
-                  <button className="btn btn-ghost" style={{padding:"5px 9px",fontSize:11}} onClick={()=>ver(r)}>👁 Ver</button>
-                  <button className="btn btn-red" style={{padding:"5px 9px",fontSize:11}} onClick={()=>del(r.id)}>🗑</button>
-                </div></td>
-              </tr>)}</tbody>
-            </table>
-        </div></div>
+      <div style={{marginBottom:14}}><input className="inp" placeholder="Buscar recibo..." value={q} onChange={e=>setQ(e.target.value)} style={{maxWidth:320}}/></div>
+      {fil.length===0?<div className="empty-state"><p>Sin recibos</p><p style={{fontSize:12,color:"#9ca3af",marginTop:4}}>Agrega abonos desde el detalle de una cotización</p></div>:(
+        <div className="resp-table"><table className="tbl">
+          <thead><tr>
+            <th>No.</th><th>Cliente</th><th>Cotización</th>
+            <th className="resp-hide">Fecha</th><th>Método</th>
+            <th>Monto</th><th>Estatus</th><th></th>
+          </tr></thead>
+          <tbody>{fil.map(r=>{
+            const cot=cotizaciones.find(c=>c.id===r.cotizacionRef);
+            const todosAbonos=cot?recibos.filter(x=>x.cotizacionRef===cot.id):[];
+            const totalPagado=todosAbonos.reduce((s,x)=>s+(x.total||0),0);
+            const pendiente=Math.max(0,(cot?.total||0)-totalPagado);
+            const pagado=cot&&pendiente===0;
+            return(
+            <tr key={r.id} onClick={()=>ver(r)} style={{cursor:"pointer"}}>
+              <td style={{fontWeight:700,color:"#0093A2"}}>{r.numero}</td>
+              <td>{r.clienteNombre}</td>
+              <td style={{fontSize:11,color:"#0093A2"}}>{cot?.numero||"—"}</td>
+              <td className="resp-hide" style={{fontSize:11}}>{r.fechaPago||r.fecha}</td>
+              <td style={{fontSize:11}}>{r.metodoPago}</td>
+              <td style={{fontFamily:"monospace",fontWeight:600}}>{FMT(r.total)}</td>
+              <td><span style={{background:pagado?"#059669":pendiente>0?"#f59e0b":"#6b7280",color:"white",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:10}}>{pagado?"PAGADO":cot?"ABONADO":"—"}</span></td>
+              <td onClick={e=>e.stopPropagation()} style={{display:"flex",gap:4,justifyContent:"flex-end"}}>
+                <button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11}} onClick={()=>ver(r)}>👁</button>
+                <button className="btn btn-red" style={{padding:"4px 8px",fontSize:11}} onClick={()=>del(r.id)}>✕</button>
+              </td>
+            </tr>);
+          })}</tbody>
+        </table></div>
       )}
     </div>
   );
 }
-function RecForm({clientes,cotizaciones,asesores,onSave,onClose}){
-  const [d,setD]=useState({clienteId:"",clienteNombre:"",clienteEmpresa:"",clienteTelefono:"",clienteEmail:"",concepto:"",total:"",metodoPago:"transferencia",referencia:"",cotizacionRef:"",asesor:asesores[0]?.nombre||"",fechaPago:TODAY(),notas:""});
+
+function RecForm({cotPrellenada,asesores,pendiente,clientes,cotizaciones,onSave,onClose}){
+  const hoy=TODAY();
+  const initState = cotPrellenada ? {
+    clienteId:cotPrellenada.clienteId||"",
+    clienteNombre:cotPrellenada.clienteNombre||"",
+    clienteEmpresa:cotPrellenada.clienteEmpresa||"",
+    clienteTelefono:cotPrellenada.clienteTelefono||"",
+    clienteEmail:cotPrellenada.clienteEmail||"",
+    concepto:"",
+    total:"",
+    metodoPago:"Transferencia",
+    referencia:"",
+    cotizacionRef:cotPrellenada.id,
+    asesor:asesores?.[0]?.nombre||"",
+    fechaPago:hoy,
+    notas:""
+  } : {
+    clienteId:"",clienteNombre:"",clienteEmpresa:"",clienteTelefono:"",clienteEmail:"",
+    concepto:"",total:"",metodoPago:"Transferencia",referencia:"",
+    cotizacionRef:"",asesor:asesores?.[0]?.nombre||"",fechaPago:hoy,notas:""
+  };
+  const [d,setD]=useState(initState);
   const f=(k,v)=>setD(p=>({...p,[k]:v}));
   const guardar=()=>{
     if(!d.clienteNombre)return alert("Selecciona un cliente");
-    if(!d.concepto||!d.total)return alert("Concepto y total requeridos");
+    if(!d.total||isNaN(parseFloat(d.total))||parseFloat(d.total)<=0)return alert("Ingresa un monto válido");
     onSave({...d,total:parseFloat(d.total)});onClose();
   };
   return(
     <div>
-      <div className="mhdr"><h2 style={{fontSize:15,fontWeight:700}}>Nuevo recibo</h2><button className="xbtn" onClick={onClose}>✕</button></div>
-      <div style={{padding:"16px 20px"}}>
-      <div className="resp-grid" style={{gap:12,marginBottom:12}}>
+      <div className="mhdr">
         <div>
-          <label>Cliente *</label>
-          <ClientSearch clientes={clientes} value={d.clienteId?{id:d.clienteId,nombre:d.clienteNombre,empresa:d.clienteEmpresa}:null} onChange={c=>setD(p=>({...p,clienteId:c?.id||"",clienteNombre:c?.nombre||"",clienteEmpresa:c?.empresa||"",clienteTelefono:c?.telefono||"",clienteEmail:c?.email||""}))}/>
+          <h2 style={{fontSize:15,fontWeight:700}}>Registrar abono</h2>
+          {cotPrellenada&&<div style={{fontSize:11,color:"#9ca3af",marginTop:2}}>{cotPrellenada.numero} — {cotPrellenada.clienteNombre}</div>}
         </div>
-        <div><label>Cotización relacionada</label>
-          <select className="inp" value={d.cotizacionRef} onChange={e=>{
-            const cot=cotizaciones.find(x=>x.id===e.target.value);
-            if(cot){
-              const concepto=cot.filas?.filter(r=>r.descripcion).map(r=>r.descripcion).join(", ")||`Servicio ${cot.numero}`;
-              const cli=cot.clienteId?null:null;
-              setD(p=>({...p,cotizacionRef:e.target.value,concepto,total:String(cot.total),clienteId:cot.clienteId||p.clienteId,clienteNombre:cot.clienteNombre||p.clienteNombre,clienteEmpresa:cot.clienteEmpresa||p.clienteEmpresa}));
-            } else f("cotizacionRef","");
-          }}>
-            <option value="">Ninguna</option>
-            {cotizaciones.map(c=><option key={c.id} value={c.id}>{c.numero} – {c.clienteNombre}</option>)}
-          </select>
+        <button className="xbtn" onClick={onClose}>✕</button>
+      </div>
+      <div style={{padding:"16px 20px"}}>
+        {cotPrellenada ? (
+          <div style={{background:"#f0f9ff",border:"1px solid #0093A2",borderRadius:8,padding:"10px 14px",marginBottom:14}}>
+            <div style={{fontSize:11,color:"#0093A2",fontWeight:700,marginBottom:4}}>Servicio vinculado</div>
+            <div style={{fontSize:12,color:"#1C2B35",fontWeight:600}}>{cotPrellenada.numero} — {cotPrellenada.clienteNombre}</div>
+            <div style={{fontSize:11,color:"#555",marginTop:3}}>Total: <strong>{cotPrellenada.total?.toLocaleString("es-MX",{style:"currency",currency:"MXN"})}</strong> · Pendiente: <strong style={{color:"#FF0065"}}>{pendiente?.toLocaleString("es-MX",{style:"currency",currency:"MXN"})}</strong></div>
+          </div>
+        ) : (
+          <div style={{marginBottom:12}}>
+            <label>Cotización relacionada</label>
+            <select className="inp" value={d.cotizacionRef} onChange={e=>{
+              const cot=cotizaciones?.find(x=>x.id===e.target.value);
+              if(cot) setD(p=>({...p,cotizacionRef:e.target.value,clienteId:cot.clienteId||"",clienteNombre:cot.clienteNombre||"",clienteEmpresa:cot.clienteEmpresa||""}));
+              else f("cotizacionRef","");
+            }}>
+              <option value="">Ninguna</option>
+              {cotizaciones?.map(c=><option key={c.id} value={c.id}>{c.numero} – {c.clienteNombre}</option>)}
+            </select>
+          </div>
+        )}
+        <div style={{marginBottom:12}}>
+          <label>Concepto del abono</label>
+          <input className="inp" placeholder="Ej: Depósito inicial, Liquidación..." value={d.concepto} onChange={e=>f("concepto",e.target.value)}/>
         </div>
-      </div>
-      <div style={{marginBottom:12}}><label>Concepto *</label><input className="inp" value={d.concepto} onChange={e=>f("concepto",e.target.value)}/></div>
-      <div className="resp-grid" style={{gap:12,marginBottom:12}}>
-        <div><label>Monto del abono MXN *</label><input className="inp" type="number" min="0" value={d.total} onChange={e=>f("total",e.target.value)}/></div>
-        <div><label>Fecha de pago</label><input className="inp" type="date" value={d.fechaPago} onChange={e=>f("fechaPago",e.target.value)}/></div>
-      </div>
-      <div className="resp-grid" style={{gap:12,marginBottom:12}}>
-        <div><label>Método de pago</label><select className="inp" value={d.metodoPago} onChange={e=>f("metodoPago",e.target.value)}>{["Transferencia","Efectivo","Tarjeta","Cheque","Otro"].map(m=><option key={m} value={m}>{m}</option>)}</select></div>
-        <div><label>Asesor de venta</label><select className="inp" value={d.asesor} onChange={e=>f("asesor",e.target.value)}>{asesores.map(a=><option key={a.nombre} value={a.nombre}>{a.nombre}</option>)}</select></div>
-      </div>
-      <div style={{marginBottom:12}}><label>No. de operación / referencia</label><input className="inp" value={d.referencia} onChange={e=>f("referencia",e.target.value)}/></div>
-      <div style={{marginBottom:16}}><label>Notas</label><textarea className="inp" rows={2} value={d.notas} onChange={e=>f("notas",e.target.value)}/></div>
-      <div style={{display:"flex",gap:9}}><button className="btn btn-teal" onClick={guardar}>Guardar</button><button className="btn btn-ghost" onClick={onClose}>Cancelar</button></div>
+        <div className="resp-grid" style={{gap:12,marginBottom:12}}>
+          <div>
+            <label>Monto del abono MXN *</label>
+            <input className="inp" type="number" min="0" max={pendiente||undefined} placeholder={pendiente?`Máx: ${pendiente}`:""} value={d.total} onChange={e=>f("total",e.target.value)}/>
+          </div>
+          <div>
+            <label>Fecha de pago</label>
+            <input className="inp" type="date" value={d.fechaPago} onChange={e=>f("fechaPago",e.target.value)}/>
+          </div>
+        </div>
+        <div className="resp-grid" style={{gap:12,marginBottom:12}}>
+          <div>
+            <label>Método de pago</label>
+            <select className="inp" value={d.metodoPago} onChange={e=>f("metodoPago",e.target.value)}>
+              {["Transferencia","Efectivo","Tarjeta","Cheque","Otro"].map(m=><option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
+          <div>
+            <label>Asesor de venta</label>
+            <select className="inp" value={d.asesor} onChange={e=>f("asesor",e.target.value)}>
+              {(asesores||[]).map(a=><option key={a.nombre} value={a.nombre}>{a.nombre}</option>)}
+            </select>
+          </div>
+        </div>
+        <div style={{marginBottom:12}}><label>No. de operación / referencia</label><input className="inp" value={d.referencia} onChange={e=>f("referencia",e.target.value)}/></div>
+        <div style={{marginBottom:16}}><label>Notas</label><textarea className="inp" rows={2} value={d.notas} onChange={e=>f("notas",e.target.value)}/></div>
+        <div style={{display:"flex",gap:9}}>
+          <button className="btn btn-teal" onClick={guardar}>💾 Guardar abono</button>
+          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+        </div>
       </div>
     </div>
   );
@@ -678,106 +745,110 @@ function RecForm({clientes,cotizaciones,asesores,onSave,onClose}){
 function RecPreview({rec,empresa,cotizaciones,recibos,onClose,MXN}){
   const [genPDF,setGenPDF]=useState(false);
   const cot=cotizaciones.find(c=>c.id===rec.cotizacionRef);
+  const todosAbonos=cot
+    ? recibos.filter(r=>r.cotizacionRef===cot.id).sort((a,b)=>(a.fechaPago||a.fecha).localeCompare(b.fechaPago||b.fecha))
+    : [rec];
   const totalServicio=cot?.total||0;
-  const todosAbonos=recibos.filter(r=>r.cotizacionRef===rec.cotizacionRef&&rec.cotizacionRef).sort((a,b)=>(a.fechaPago||a.fecha).localeCompare(b.fechaPago||b.fecha));
   const totalPagado=todosAbonos.reduce((s,r)=>s+(r.total||0),0);
   const pendiente=Math.max(0,totalServicio-totalPagado);
-  const estatus=totalServicio>0&&pendiente===0?"PAGADO":"ABONADO";
-  const statusColor=estatus==="PAGADO"?"#00d9a0":"#ff9940";
+  const pagado=totalServicio>0&&pendiente===0;
   const C2={navy:"#1C2B35",teal:"#0093A2",pink:"#FF0065"};
+  const FMT=n=>n?.toLocaleString("es-MX",{style:"currency",currency:"MXN"})||"$0.00";
+  const servicios=cot?.filas?.filter(f=>f.descripcion).map(f=>f.descripcion).join(" · ")||"—";
   return(
   <div>
-    <div className="no-print mhdr"><div style={{fontWeight:600,fontSize:13}}>{rec.numero}</div>
-      <div style={{display:"flex",gap:8}}>
+    <div className="no-print mhdr">
+      <div style={fontWeight:600,fontSize:13}>{rec.numero}</div>
+      <div style={display:"flex",gap:8}>
         <button className="btn btn-green" disabled={genPDF} onClick={async()=>{setGenPDF(true);await generatePDF("rec-print-area",`${rec.numero}.pdf`);setGenPDF(false);}}>
           {genPDF?"Generando...":"⬇️ PDF"}
         </button>
         <button className="xbtn" onClick={onClose}>✕</button>
       </div>
     </div>
-    <div id="rec-print-area" style={{background:"white",color:"#111",fontSize:12,fontFamily:"'Segoe UI',Arial,sans-serif",maxWidth:800}}>
+    <div id="rec-print-area" style={{background:"white",color:"#111",fontSize:12,fontFamily:"'Segoe UI',Arial,sans-serif",maxWidth:780,margin:"0 auto"}}>
       <DocHeader numero={rec.numero} tipo="COMPROBANTE DE PAGO" empresa={empresa}/>
 
-      <div style={{display:"flex",gap:0,borderBottom:"2px solid #0093A2"}}>
+      <div style={{display:"flex",borderBottom:"2px solid #0093A2"}}>
         <div style={{flex:1,padding:"12px 20px",borderRight:"1px solid #e0eaf0"}}>
-          <div style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:8}}>Cliente</div>
-          <div style={{fontWeight:700,fontSize:13,color:C2.navy,marginBottom:3}}>{rec.clienteNombre}</div>
+          <div style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:6}}>Cliente</div>
+          <div style={{fontWeight:700,fontSize:13,color:C2.navy,marginBottom:2}}>{rec.clienteNombre}</div>
           {rec.clienteEmpresa&&<div style={{fontSize:11,color:"#555",marginBottom:2}}>{rec.clienteEmpresa}</div>}
           {rec.clienteTelefono&&<div style={{fontSize:11,color:"#555",marginBottom:2}}>📱 {rec.clienteTelefono}</div>}
-          {rec.clienteEmail&&<div style={{fontSize:11,color:"#555"}}>{rec.clienteEmail}</div>}
+          {rec.clienteEmail&&<div style={{fontSize:11,color:"#555"}}>✉️ {rec.clienteEmail}</div>}
         </div>
         <div style={{flex:1,padding:"12px 20px"}}>
-          <div style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:8}}>Cotización</div>
-          {cot&&<div style={{fontSize:12,fontWeight:700,color:C2.teal,marginBottom:3}}>{cot.numero}</div>}
-          <div style={{fontSize:11,color:"#555",marginBottom:2}}>Fecha de pago: <strong style={{color:C2.navy}}>{rec.fechaPago||rec.fecha}</strong></div>
-          <div style={{fontSize:11,color:"#555",marginBottom:2}}>Asesor: <strong style={{color:C2.navy}}>{rec.asesor||empresa.ejecutivo||""}</strong></div>
-          <div style={{fontSize:11,color:"#555"}}>Método: <strong style={{color:C2.navy}}>{rec.metodoPago}</strong></div>
+          <div style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:6}}>Datos del abono</div>
+          <div style={{fontSize:11,color:"#555",marginBottom:3}}>Fecha: <strong style={{color:C2.navy}}>{rec.fechaPago||rec.fecha}</strong></div>
+          <div style={{fontSize:11,color:"#555",marginBottom:3}}>Asesor: <strong style={{color:C2.navy}}>{rec.asesor||empresa.ejecutivo||""}</strong></div>
+          <div style={{fontSize:11,color:"#555",marginBottom:3}}>Método: <strong style={{color:C2.navy}}>{rec.metodoPago}</strong></div>
+          {rec.referencia&&<div style={{fontSize:11,color:"#555"}}>Ref: <strong>{rec.referencia}</strong></div>}
         </div>
       </div>
 
-      <div style={{padding:"12px 20px",borderBottom:"1px solid #e0eaf0"}}>
-        <div style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:6}}>Concepto</div>
-        <div style={{fontSize:13,color:C2.navy,fontWeight:500}}>{rec.concepto}</div>
-        {rec.referencia&&<div style={{fontSize:11,color:"#777",marginTop:3}}>Ref: {rec.referencia}</div>}
-      </div>
+      {cot&&<div style={{padding:"10px 20px",background:"#f0f9ff",borderBottom:"1px solid #e0eaf0"}}>
+        <div style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:4}}>Servicio contratado — {cot.numero}</div>
+        <div style={{fontSize:12,color:C2.navy,fontWeight:500}}>{servicios}</div>
+        {rec.concepto&&<div style={{fontSize:11,color:"#555",marginTop:2}}>Concepto abono: {rec.concepto}</div>}
+      </div>}
 
       <div style={{padding:"12px 20px",borderBottom:"1px solid #e0eaf0"}}>
-        <div style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:10}}>Resumen de pagos</div>
-        <div style={{display:"flex",justifyContent:"space-between",marginBottom:6,fontSize:12}}>
-          <span style={{color:"#555"}}>Total del servicio</span>
-          <span style={{fontWeight:700,color:C2.navy,fontFamily:"monospace"}}>{MXN(totalServicio)}</span>
+        <div style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:10}}>Historial de pagos</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,paddingBottom:8,borderBottom:"1px dashed #e0eaf0"}}>
+          <span style={{fontSize:12,color:"#555"}}>Total del servicio</span>
+          <span style={{fontWeight:700,color:C2.navy,fontFamily:"monospace",fontSize:13}}>{FMT(totalServicio)}</span>
         </div>
-        <div style={{borderTop:"1px dashed #e0eaf0",paddingTop:6,marginTop:6}}>
-          <div style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:6}}>Abonos</div>
-          {(todosAbonos.length>0?todosAbonos:[rec]).map((r,i)=>(
-            <div key={r.id||i} style={{display:"flex",justifyContent:"space-between",marginBottom:4,fontSize:11}}>
-              <span style={{color:"#555"}}>Abono {i+1} — {r.fechaPago||r.fecha} ({r.metodoPago})</span>
-              <span style={{fontWeight:600,color:"#00d9a0",fontFamily:"monospace"}}>{MXN(r.total)}</span>
+        {todosAbonos.map((r,i)=>(
+          <div key={r.id||i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,padding:"6px 10px",borderRadius:6,background:r.id===rec.id?"#f0fdf4":"#f9fafb",border:r.id===rec.id?"1px solid #00d9a0":"1px solid transparent"}}>
+            <div>
+              <div style={{fontSize:11,fontWeight:600,color:C2.navy}}>Abono {i+1} {r.id===rec.id?"← este recibo":""}</div>
+              <div style={{fontSize:10,color:"#777"}}>{r.fechaPago||r.fecha} · {r.metodoPago}{r.referencia?` · Ref: ${r.referencia}`:""}</div>
             </div>
-          ))}
+            <span style={{fontWeight:700,color:"#059669",fontFamily:"monospace"}}>{FMT(r.total)}</span>
+          </div>
+        ))}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:10,paddingTop:10,borderTop:"2px solid #e0eaf0"}}>
+          <span style={{fontSize:13,fontWeight:700}}>Importe pendiente</span>
+          <span style={{fontSize:15,fontWeight:800,color:pendiente>0?C2.pink:"#059669",fontFamily:"monospace"}}>{FMT(pendiente)}</span>
         </div>
-        <div style={{borderTop:"2px solid #e0eaf0",paddingTop:8,marginTop:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <span style={{fontSize:12,fontWeight:700,color:"#555"}}>Importe pendiente</span>
-          <span style={{fontSize:15,fontWeight:800,color:pendiente>0?C2.pink:"#00d9a0",fontFamily:"monospace"}}>{MXN(pendiente)}</span>
-        </div>
-        <div style={{marginTop:10,textAlign:"center"}}>
-          <span style={{background:statusColor,color:"white",fontWeight:800,fontSize:13,padding:"5px 22px",borderRadius:20,letterSpacing:".05em"}}>{estatus}</span>
+        <div style={{textAlign:"center",marginTop:12}}>
+          <span style={{background:pagado?"#059669":"#f59e0b",color:"white",fontWeight:800,fontSize:13,padding:"5px 24px",borderRadius:20,letterSpacing:".05em"}}>
+            {pagado?"✓ PAGADO":"● ABONADO"}
+          </span>
         </div>
       </div>
 
-      <div style={{padding:"10px 20px",borderBottom:"1px solid #e0eaf0",background:"#f9fafb"}}>
+      <div style={{padding:"10px 20px",background:"#f9fafb",borderBottom:"1px solid #e0eaf0"}}>
         <div style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:6}}>Términos y Condiciones</div>
         {["El depósito inicial recibido el día de hoy, garantiza el bloqueo de la(s) unidad(es) para su servicio.",
-          "La fecha límite para liquidar el servicio deberá ser como máximo una semana antes del servicio.",
-          "Se cancelará el servicio, sin previo aviso, si cualquiera de los depósitos no se recibe antes de la fecha límite.",
-          "En caso de modificación del servicio, el asesor de ventas deberá autorizar y establecer los cambios en la tarifa.",
-          "El excederse del tiempo establecido tendrá un costo de $450 MXN por hora extra.",
-          "Free Travel México no se hace responsable por objetos olvidados.",
-          "Si el cliente presenta mal comportamiento, el operador tendrá la facultad de cancelar el servicio sin reembolso."
-        ].map((t,i)=>(
-          <div key={i} style={{fontSize:9,color:"#555",marginBottom:3}}>{i+1}. {t}</div>
+"La fecha límite para liquidar el servicio deberá ser como máximo una semana antes del servicio.",
+"Se cancelará el servicio, sin previo aviso, si cualquiera de los depósitos no se recibe antes de la fecha límite.",
+"En caso de modificación del servicio, el asesor de ventas deberá autorizar y establecer los cambios en la tarifa.",
+"El excederse del tiempo establecido para el servicio tendrá un costo de $450 MXN por hora extra.",
+"Free Travel México no se hace responsable por objetos olvidados.",
+"Si el cliente presenta mal comportamiento, el operador tendrá la facultad de cancelar el servicio sin reembolso."].map((t,i)=>(
+          <div key={i} style={{fontSize:9,color:"#555",marginBottom:3,lineHeight:1.4}}>{i+1}. {t}</div>
         ))}
       </div>
 
       <div style={{padding:"10px 20px",display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:8,background:"#f4f8fb",borderBottom:"1px solid #e0eaf0"}}>
         <div style={{fontSize:10,color:"#555"}}>
-          <div style={{fontWeight:700,color:C2.navy,marginBottom:3}}>Datos empresa</div>
-          <div>Razón social: Free Travel México S.A. de C.V.</div>
-          <div>R.F.C.: FTM1309102F3</div>
-          <div>{empresa.bancoBanco||"BBVA"}: {empresa.bancoCuenta||empresa.bancoClabe||""}</div>
+          <div style={{fontWeight:700,color:C2.navy,marginBottom:3}}>{empresa.nombre}</div>
+          <div>RFC: {empresa.rfc}</div>
+          <div>{empresa.bancoBanco||"BBVA"}: {empresa.bancoCuenta||""}</div>
           <div>CLABE: {empresa.bancoClabe||""}</div>
         </div>
         <div style={{fontSize:10,color:"#555",textAlign:"right"}}>
-          <div>C. 42 391, entre 55-D y 57, Local 8, Plaza Victoria</div>
-          <div>Francisco de Montejo, 97203 Mérida, Yuc.</div>
+          <div>{empresa.direccion}</div>
           <div>Tel: {empresa.telefono}</div>
-          <div>{empresa.email} | {empresa.web}</div>
+          <div>{empresa.email}</div>
+          <div>{empresa.web}</div>
         </div>
       </div>
-      <div style={{background:C2.navy,padding:"7px 20px",textAlign:"center",color:"rgba(255,255,255,.7)",fontSize:11,fontWeight:600}}>¡Gracias por su preferencia!</div>
+      <div style={{background:C2.navy,padding:"8px 20px",textAlign:"center",color:"rgba(255,255,255,.75)",fontSize:11,fontWeight:600}}>¡Gracias por su preferencia!</div>
     </div>
   </div>
-);}
+);\}
 
 function Clientes({clientes,setClientes,notify}){
   const [q,setQ]=useState("");
