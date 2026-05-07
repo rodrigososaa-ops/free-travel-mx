@@ -758,8 +758,8 @@ function RecPreview({rec,empresa,cotizaciones,recibos,onClose,MXN}){
   return(
   <div>
     <div className="no-print mhdr">
-      <div style={fontWeight:600,fontSize:13}>{rec.numero}</div>
-      <div style={display:"flex",gap:8}>
+      <div style={{fontWeight:600,fontSize:13}}>{rec.numero}</div>
+      <div style={{display:"flex",gap:8}}>
         <button className="btn btn-green" disabled={genPDF} onClick={async()=>{setGenPDF(true);await generatePDF("rec-print-area",`${rec.numero}.pdf`);setGenPDF(false);}}>
           {genPDF?"Generando...":"⬇️ PDF"}
         </button>
