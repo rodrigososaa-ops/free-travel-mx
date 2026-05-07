@@ -1,3 +1,4 @@
+// FTM v2026-05-06
 import { useState, useCallback, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { createClient } from '@supabase/supabase-js';
@@ -752,103 +753,132 @@ function RecPreview({rec,empresa,cotizaciones,recibos,onClose,MXN}){
   const totalPagado=todosAbonos.reduce((s,r)=>s+(r.total||0),0);
   const pendiente=Math.max(0,totalServicio-totalPagado);
   const pagado=totalServicio>0&&pendiente===0;
-  const C2={navy:"#1C2B35",teal:"#0093A2",pink:"#FF0065"};
+  const navy="#1C2B35",teal="#0093A2",pink="#FF0065";
   const FMT=n=>n?.toLocaleString("es-MX",{style:"currency",currency:"MXN"})||"$0.00";
   const servicios=cot?.filas?.filter(f=>f.descripcion).map(f=>f.descripcion).join(" · ")||"—";
+  const TC=["El depósito inicial recibido el día de hoy, garantiza el bloqueo de la(s) unidad(es) para su servicio.",
+    "La fecha límite para liquidar el servicio deberá ser como máximo una semana antes del servicio.",
+    "Se cancelará el servicio, sin previo aviso, si cualquiera de los depósitos no se recibe antes de la fecha límite.",
+    "En caso de modificación del servicio, el asesor de ventas deberá autorizar y establecer los cambios en la tarifa.",
+    "El excederse del tiempo establecido para el servicio tendrá un costo de $450 MXN por hora extra.",
+    "Free Travel México no se hace responsable por objetos olvidados.",
+    "Si el cliente presenta mal comportamiento, el operador tendrá la facultad de cancelar el servicio sin reembolso."];
+  const S={
+    wrap:{background:"white",color:"#111",fontSize:12,fontFamily:"'Segoe UI',Arial,sans-serif",maxWidth:780,margin:"0 auto"},
+    hdrNum:{fontWeight:600,fontSize:13},
+    hdrBtns:{display:"flex",gap:8},
+    twoCol:{display:"flex",borderBottom:"2px solid "+teal},
+    col1:{flex:1,padding:"12px 20px",borderRight:"1px solid #e0eaf0"},
+    col2:{flex:1,padding:"12px 20px"},
+    secLabel:{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:6},
+    clientName:{fontWeight:700,fontSize:13,color:navy,marginBottom:2},
+    clientSub:{fontSize:11,color:"#555",marginBottom:2},
+    svcBox:{padding:"10px 20px",background:"#f0f9ff",borderBottom:"1px solid #e0eaf0"},
+    svcTitle:{fontSize:12,color:navy,fontWeight:500},
+    svcSub:{fontSize:11,color:"#555",marginTop:2},
+    histBox:{padding:"12px 20px",borderBottom:"1px solid #e0eaf0"},
+    histRow:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,paddingBottom:8,borderBottom:"1px dashed #e0eaf0"},
+    totalLabel:{fontSize:12,color:"#555"},
+    totalAmt:{fontWeight:700,color:navy,fontFamily:"monospace",fontSize:13},
+    pendRow:{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:10,paddingTop:10,borderTop:"2px solid #e0eaf0"},
+    pendLabel:{fontSize:13,fontWeight:700},
+    tcBox:{padding:"10px 20px",background:"#f9fafb",borderBottom:"1px solid #e0eaf0"},
+    tcLabel:{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:6},
+    tcItem:{fontSize:9,color:"#555",marginBottom:3,lineHeight:1.4},
+    footerData:{padding:"10px 20px",display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:8,background:"#f4f8fb",borderBottom:"1px solid #e0eaf0"},
+    footerLeft:{fontSize:10,color:"#555"},
+    footerRight:{fontSize:10,color:"#555",textAlign:"right"},
+    footerBar:{background:navy,padding:"8px 20px",textAlign:"center",color:"rgba(255,255,255,.75)",fontSize:11,fontWeight:600},
+    empName:{fontWeight:700,color:navy,marginBottom:3},
+    statusBadge:{textAlign:"center",marginTop:12},
+  };
   return(
   <div>
     <div className="no-print mhdr">
-      <div style={{fontWeight:600,fontSize:13}}>{rec.numero}</div>
-      <div style={{display:"flex",gap:8}}>
+      <div style={S.hdrNum}>{rec.numero}</div>
+      <div style={S.hdrBtns}>
         <button className="btn btn-green" disabled={genPDF} onClick={async()=>{setGenPDF(true);await generatePDF("rec-print-area",`${rec.numero}.pdf`);setGenPDF(false);}}>
           {genPDF?"Generando...":"⬇️ PDF"}
         </button>
         <button className="xbtn" onClick={onClose}>✕</button>
       </div>
     </div>
-    <div id="rec-print-area" style={{background:"white",color:"#111",fontSize:12,fontFamily:"'Segoe UI',Arial,sans-serif",maxWidth:780,margin:"0 auto"}}>
+    <div id="rec-print-area" style={S.wrap}>
       <DocHeader numero={rec.numero} tipo="COMPROBANTE DE PAGO" empresa={empresa}/>
-
-      <div style={{display:"flex",borderBottom:"2px solid #0093A2"}}>
-        <div style={{flex:1,padding:"12px 20px",borderRight:"1px solid #e0eaf0"}}>
-          <div style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:6}}>Cliente</div>
-          <div style={{fontWeight:700,fontSize:13,color:C2.navy,marginBottom:2}}>{rec.clienteNombre}</div>
-          {rec.clienteEmpresa&&<div style={{fontSize:11,color:"#555",marginBottom:2}}>{rec.clienteEmpresa}</div>}
-          {rec.clienteTelefono&&<div style={{fontSize:11,color:"#555",marginBottom:2}}>📱 {rec.clienteTelefono}</div>}
-          {rec.clienteEmail&&<div style={{fontSize:11,color:"#555"}}>✉️ {rec.clienteEmail}</div>}
+      <div style={S.twoCol}>
+        <div style={S.col1}>
+          <div style={S.secLabel}>Cliente</div>
+          <div style={S.clientName}>{rec.clienteNombre}</div>
+          {rec.clienteEmpresa&&<div style={S.clientSub}>{rec.clienteEmpresa}</div>}
+          {rec.clienteTelefono&&<div style={S.clientSub}>📱 {rec.clienteTelefono}</div>}
+          {rec.clienteEmail&&<div style={S.clientSub}>✉️ {rec.clienteEmail}</div>}
         </div>
-        <div style={{flex:1,padding:"12px 20px"}}>
-          <div style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:6}}>Datos del abono</div>
-          <div style={{fontSize:11,color:"#555",marginBottom:3}}>Fecha: <strong style={{color:C2.navy}}>{rec.fechaPago||rec.fecha}</strong></div>
-          <div style={{fontSize:11,color:"#555",marginBottom:3}}>Asesor: <strong style={{color:C2.navy}}>{rec.asesor||empresa.ejecutivo||""}</strong></div>
-          <div style={{fontSize:11,color:"#555",marginBottom:3}}>Método: <strong style={{color:C2.navy}}>{rec.metodoPago}</strong></div>
-          {rec.referencia&&<div style={{fontSize:11,color:"#555"}}>Ref: <strong>{rec.referencia}</strong></div>}
+        <div style={S.col2}>
+          <div style={S.secLabel}>Datos del abono</div>
+          <div style={S.clientSub}>Fecha: <strong style={S.hdrNum}>{rec.fechaPago||rec.fecha}</strong></div>
+          <div style={S.clientSub}>Asesor: <strong>{rec.asesor||empresa.ejecutivo||""}</strong></div>
+          <div style={S.clientSub}>Método: <strong>{rec.metodoPago}</strong></div>
+          {rec.referencia&&<div style={S.clientSub}>Ref: <strong>{rec.referencia}</strong></div>}
         </div>
       </div>
-
-      {cot&&<div style={{padding:"10px 20px",background:"#f0f9ff",borderBottom:"1px solid #e0eaf0"}}>
-        <div style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:4}}>Servicio contratado — {cot.numero}</div>
-        <div style={{fontSize:12,color:C2.navy,fontWeight:500}}>{servicios}</div>
-        {rec.concepto&&<div style={{fontSize:11,color:"#555",marginTop:2}}>Concepto abono: {rec.concepto}</div>}
+      {cot&&<div style={S.svcBox}>
+        <div style={S.secLabel}>Servicio contratado — {cot.numero}</div>
+        <div style={S.svcTitle}>{servicios}</div>
+        {rec.concepto&&<div style={S.svcSub}>Concepto abono: {rec.concepto}</div>}
       </div>}
-
-      <div style={{padding:"12px 20px",borderBottom:"1px solid #e0eaf0"}}>
-        <div style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:10}}>Historial de pagos</div>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,paddingBottom:8,borderBottom:"1px dashed #e0eaf0"}}>
-          <span style={{fontSize:12,color:"#555"}}>Total del servicio</span>
-          <span style={{fontWeight:700,color:C2.navy,fontFamily:"monospace",fontSize:13}}>{FMT(totalServicio)}</span>
+      <div style={S.histBox}>
+        <div style={S.secLabel}>Historial de pagos</div>
+        <div style={S.histRow}>
+          <span style={S.totalLabel}>Total del servicio</span>
+          <span style={S.totalAmt}>{FMT(totalServicio)}</span>
         </div>
-        {todosAbonos.map((r,i)=>(
-          <div key={r.id||i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,padding:"6px 10px",borderRadius:6,background:r.id===rec.id?"#f0fdf4":"#f9fafb",border:r.id===rec.id?"1px solid #00d9a0":"1px solid transparent"}}>
+        {todosAbonos.map((r,i)=>{
+          const isThis=r.id===rec.id;
+          const rowStyle={display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,padding:"6px 10px",borderRadius:6,background:isThis?"#f0fdf4":"#f9fafb",border:isThis?"1px solid #00d9a0":"1px solid transparent"};
+          const numStyle={fontSize:11,fontWeight:600,color:navy};
+          const subStyle={fontSize:10,color:"#777"};
+          const amtStyle={fontWeight:700,color:"#059669",fontFamily:"monospace"};
+          return(
+          <div key={r.id||i} style={rowStyle}>
             <div>
-              <div style={{fontSize:11,fontWeight:600,color:C2.navy}}>Abono {i+1} {r.id===rec.id?"← este recibo":""}</div>
-              <div style={{fontSize:10,color:"#777"}}>{r.fechaPago||r.fecha} · {r.metodoPago}{r.referencia?` · Ref: ${r.referencia}`:""}</div>
+              <div style={numStyle}>Abono {i+1} {isThis?"← este recibo":""}</div>
+              <div style={subStyle}>{r.fechaPago||r.fecha} · {r.metodoPago}{r.referencia?` · Ref: ${r.referencia}`:""}</div>
             </div>
-            <span style={{fontWeight:700,color:"#059669",fontFamily:"monospace"}}>{FMT(r.total)}</span>
-          </div>
-        ))}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:10,paddingTop:10,borderTop:"2px solid #e0eaf0"}}>
-          <span style={{fontSize:13,fontWeight:700}}>Importe pendiente</span>
-          <span style={{fontSize:15,fontWeight:800,color:pendiente>0?C2.pink:"#059669",fontFamily:"monospace"}}>{FMT(pendiente)}</span>
+            <span style={amtStyle}>{FMT(r.total)}</span>
+          </div>);
+        })}
+        <div style={S.pendRow}>
+          <span style={S.pendLabel}>Importe pendiente</span>
+          <span style={Object.assign({fontSize:15,fontWeight:800,fontFamily:"monospace"},{color:pendiente>0?pink:"#059669"})}>{FMT(pendiente)}</span>
         </div>
-        <div style={{textAlign:"center",marginTop:12}}>
-          <span style={{background:pagado?"#059669":"#f59e0b",color:"white",fontWeight:800,fontSize:13,padding:"5px 24px",borderRadius:20,letterSpacing:".05em"}}>
+        <div style={S.statusBadge}>
+          <span style={Object.assign({color:"white",fontWeight:800,fontSize:13,padding:"5px 24px",borderRadius:20,letterSpacing:".05em"},{background:pagado?"#059669":"#f59e0b"})}>
             {pagado?"✓ PAGADO":"● ABONADO"}
           </span>
         </div>
       </div>
-
-      <div style={{padding:"10px 20px",background:"#f9fafb",borderBottom:"1px solid #e0eaf0"}}>
-        <div style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",marginBottom:6}}>Términos y Condiciones</div>
-        {["El depósito inicial recibido el día de hoy, garantiza el bloqueo de la(s) unidad(es) para su servicio.",
-"La fecha límite para liquidar el servicio deberá ser como máximo una semana antes del servicio.",
-"Se cancelará el servicio, sin previo aviso, si cualquiera de los depósitos no se recibe antes de la fecha límite.",
-"En caso de modificación del servicio, el asesor de ventas deberá autorizar y establecer los cambios en la tarifa.",
-"El excederse del tiempo establecido para el servicio tendrá un costo de $450 MXN por hora extra.",
-"Free Travel México no se hace responsable por objetos olvidados.",
-"Si el cliente presenta mal comportamiento, el operador tendrá la facultad de cancelar el servicio sin reembolso."].map((t,i)=>(
-          <div key={i} style={{fontSize:9,color:"#555",marginBottom:3,lineHeight:1.4}}>{i+1}. {t}</div>
-        ))}
+      <div style={S.tcBox}>
+        <div style={S.tcLabel}>Términos y Condiciones</div>
+        {TC.map((t,i)=><div key={i} style={S.tcItem}>{i+1}. {t}</div>)}
       </div>
-
-      <div style={{padding:"10px 20px",display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:8,background:"#f4f8fb",borderBottom:"1px solid #e0eaf0"}}>
-        <div style={{fontSize:10,color:"#555"}}>
-          <div style={{fontWeight:700,color:C2.navy,marginBottom:3}}>{empresa.nombre}</div>
+      <div style={S.footerData}>
+        <div style={S.footerLeft}>
+          <div style={S.empName}>{empresa.nombre}</div>
           <div>RFC: {empresa.rfc}</div>
           <div>{empresa.bancoBanco||"BBVA"}: {empresa.bancoCuenta||""}</div>
           <div>CLABE: {empresa.bancoClabe||""}</div>
         </div>
-        <div style={{fontSize:10,color:"#555",textAlign:"right"}}>
+        <div style={S.footerRight}>
           <div>{empresa.direccion}</div>
           <div>Tel: {empresa.telefono}</div>
           <div>{empresa.email}</div>
           <div>{empresa.web}</div>
         </div>
       </div>
-      <div style={{background:C2.navy,padding:"8px 20px",textAlign:"center",color:"rgba(255,255,255,.75)",fontSize:11,fontWeight:600}}>¡Gracias por su preferencia!</div>
+      <div style={S.footerBar}>¡Gracias por su preferencia!</div>
     </div>
   </div>
-);\}
+);}
 
 function Clientes({clientes,setClientes,notify}){
   const [q,setQ]=useState("");
